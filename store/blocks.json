@@ -1,0 +1,15 @@
+{
+  "search-result": {
+    "blocks": [
+      "filter-navigator",
+      "gallery",
+      "not-found",
+      "breadcrumb",
+      "total-products",
+      "order-by"
+    ]
+  },
+  "gallery": {
+    "blocks": ["product-summary"]
+  }
+}
