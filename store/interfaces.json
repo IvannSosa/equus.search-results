@@ -78,19 +78,20 @@
   "search-fetch-more": {
     "component": "FetchMore",
     "content": {
-      "$ref": "app:vtex.search-result#/definitions/FetchMore"
+      "$ref": "app:arredo.search-result#/definitions/FetchMore"
     }
   },
   "search-fetch-previous": {
     "component": "FetchPrevious",
     "content": {
-      "$ref": "app:vtex.search-result#/definitions/FetchPrevious"
+      "$ref": "app:arredo.search-result#/definitions/FetchPrevious"
     }
   },
   "search-result-layout.desktop": {
     "allowed": [
       "breadcrumb.search",
       "filter-navigator.v3",
+      "filter-toggle-button",
       "total-products.v2",
       "order-by.v2",
       "search-title.v2",
@@ -114,6 +115,7 @@
     "allowed": [
       "breadcrumb.search",
       "filter-navigator.v3",
+      "filter-toggle-button",
       "total-products.v2",
       "order-by.v2",
       "search-title.v2",
@@ -155,7 +157,7 @@
   "order-by.v2": {
     "component": "OrderByFlexible",
     "content": {
-      "$ref": "app:vtex.search-result#/definitions/OrderBy"
+      "$ref": "app:arredo.search-result#/definitions/OrderBy"
     }
   },
   "filter-navigator.v3": {
@@ -165,7 +167,7 @@
   "total-products.v2": {
     "component": "TotalProductsFlexible",
     "content": {
-      "$ref": "app:vtex.search-result#/definitions/TotalProducts"
+      "$ref": "app:arredo.search-result#/definitions/TotalProducts"
     }
   },
   "search-title.v2": {
@@ -173,5 +175,8 @@
   },
   "sidebar-close-button": {
     "component": "SidebarCloseButton"
+  },
+  "filter-toggle-button": {
+    "component": "FilterToggleButton"
   }
 }

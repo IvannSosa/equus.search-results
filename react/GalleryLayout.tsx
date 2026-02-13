@@ -11,6 +11,7 @@ import { SearchPageContext } from 'vtex.search-page-context'
 
 import GalleryLayoutRow from './components/GalleryLayoutRow'
 import SettingsContext from './components/SettingsContext'
+import { useFilterToggle } from './components/FilterToggleContext'
 import ProductListEventCaller from './utils/ProductListEventCaller'
 import type { Product } from './Gallery'
 import {
@@ -66,6 +67,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   const { getSettings } = useRuntime()
   const { selectedGalleryLayout } = useSearchPageState()
   const searchPageStateDispatch = useSearchPageStateDispatch()
+  const { filtersVisible } = useFilterToggle()
 
   const breadcrumb = useBreadcrumb()
   const searchTitle = useSearchTitle(breadcrumb ?? [], { matchFt: true }).trim()
@@ -139,12 +141,14 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
     return null
   }
 
+  const filtersModifier = filtersVisible ? 'filtersOpen' : 'filtersClosed'
+
   const galleryClasses = classNames(
-    applyModifiers(handles.gallery, currentLayoutOption.name),
+    applyModifiers(handles.gallery, [currentLayoutOption.name, filtersModifier]),
     'flex flex-row flex-wrap items-stretch bn ph1 na4',
     {
-      'justify-center': !showingFacets,
-      'pl9-l': showingFacets,
+      'justify-center': !showingFacets && !filtersVisible,
+      'pl9-l': showingFacets || filtersVisible,
     }
   )
 

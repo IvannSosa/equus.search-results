@@ -4,6 +4,7 @@ import { useDevice } from 'vtex.device-detector'
 
 import FilterNavigator from './FilterNavigator'
 import FilterNavigatorContext from './components/FilterNavigatorContext'
+import { useFilterToggle } from './components/FilterToggleContext'
 import styles from './searchResult.css'
 import { sortFilterValues } from './utils/sortFilterValues'
 
@@ -46,6 +47,7 @@ const withSearchPageContextProps =
     } = useSearchPage()
 
     const { isMobile } = useDevice()
+    const { filtersVisible } = useFilterToggle()
 
     const filtersFetchMore =
       searchQuery && searchQuery.facets && searchQuery.facets.facetsFetchMore
@@ -75,11 +77,16 @@ const withSearchPageContextProps =
       return null
     }
 
+    // On desktop layout, respect the filter toggle visibility
+    const isDesktopLayout = layout === 'desktop'
+    const shouldHide = isDesktopLayout && !isMobile && !filtersVisible
+
     return (
       <div
         className={`${styles['filters--layout']} ${
           layout === 'desktop' && isMobile ? 'w-100 mh5' : ''
-        }`}
+        } ${shouldHide ? styles['filters--layout-hidden'] || '' : ''}`}
+        style={shouldHide ? { display: 'none' } : undefined}
       >
         <FilterNavigatorContext.Provider value={queryArgs}>
           <Component

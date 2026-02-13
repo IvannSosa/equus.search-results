@@ -109,5 +109,8 @@
   "admin/editor.search-result.fetch-previous": "Cargar anterior",
   "admin/editor.search-result.fetch-button.button-behavior": "Comportamiento del botón",
   "admin/editor.search-result.fetch-button.button-behavior.button": "Botón",
-  "admin/editor.search-result.fetch-button.button-behavior.link-to-page": "Link a la página (mejora el SEO; puede cambiar el aspecto del botón)"
+  "admin/editor.search-result.fetch-button.button-behavior.link-to-page": "Link a la página (mejora el SEO; puede cambiar el aspecto del botón)",
+  "store/search-result.filter-toggle.show": "Ver filtros",
+  "store/search-result.filter-toggle.hide": "Ocultar filtros",
+  "admin/editor.search-result.filter-toggle.title": "Botón toggle de filtros"
 }

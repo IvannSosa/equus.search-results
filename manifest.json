@@ -1,11 +1,13 @@
 {
   "name": "search-result",
   "vendor": "arredo",
-  "version": "3.138.9",
+  "version": "3.139.0",
   "title": "Arredo Search Result",
   "description": "A search result wrapper component",
   "mustUpdateAt": "2019-04-25",
-  "registries": ["smartcheckout"],
+  "registries": [
+    "smartcheckout"
+  ],
   "scripts": {
     "postreleasy": "vtex publish --verbose"
   },

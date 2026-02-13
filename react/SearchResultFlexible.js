@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef } from 'react'
+import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react'
 import {
   SearchPageContext,
   SearchPageStateContext,
@@ -12,6 +12,7 @@ import { pathOr, isEmpty } from 'ramda'
 
 import SearchResultContainer from './components/SearchResultContainer'
 import ContextProviders from './components/ContextProviders'
+import FilterToggleContext from './components/FilterToggleContext'
 import getFilters from './utils/getFilters'
 import LoadingOverlay from './components/LoadingOverlay'
 import { PAGINATION_TYPE } from './constants/paginationType'
@@ -131,6 +132,16 @@ const SearchResultFlexible = ({
 
   useShowContentLoader(searchQuery, dispatch)
 
+  const [filtersVisible, setFiltersVisible] = useState(false)
+  const toggleFiltersVisibility = useCallback(() => {
+    setFiltersVisible(prev => !prev)
+  }, [])
+
+  const filterToggleValue = useMemo(
+    () => ({ filtersVisible, toggleFiltersVisibility }),
+    [filtersVisible, toggleFiltersVisibility]
+  )
+
   const settings = useMemo(
     () => ({
       hiddenFacets,
@@ -205,40 +216,42 @@ const SearchResultFlexible = ({
     <SearchPageContext.Provider value={context}>
       <SearchPageStateContext.Provider value={state}>
         <SearchPageStateDispatch.Provider value={dispatch}>
-          <ContextProviders
-            queryVariables={searchQuery.variables}
-            settings={settings}
-          >
-            <SearchResultContainer
-              searchQuery={searchQuery}
-              maxItemsPerPage={maxItemsPerPage}
-              pagination={pagination}
-              mobileLayout={mobileLayout}
-              map={map}
-              params={params}
-              priceRange={priceRange}
-              hiddenFacets={hiddenFacets}
-              orderBy={orderBy}
-              page={page}
-              facetsLoading={facetsLoading}
-              lazyItemsRemaining={lazyItemsRemaining}
+          <FilterToggleContext.Provider value={filterToggleValue}>
+            <ContextProviders
+              queryVariables={searchQuery.variables}
+              settings={settings}
             >
-              <LoadingOverlay loading={showLoading}>
-                <div
-                  data-af-onimpression={searchId ? true : undefined}
-                  data-af-search-id={searchId}
-                  className={`${
-                    handles.loadingOverlay
-                  } w-100 flex flex-column flex-grow-1 ${generateBlockClass(
-                    styles['container--layout'],
-                    blockClass
-                  )}`}
-                >
-                  {children}
-                </div>
-              </LoadingOverlay>
-            </SearchResultContainer>
-          </ContextProviders>
+              <SearchResultContainer
+                searchQuery={searchQuery}
+                maxItemsPerPage={maxItemsPerPage}
+                pagination={pagination}
+                mobileLayout={mobileLayout}
+                map={map}
+                params={params}
+                priceRange={priceRange}
+                hiddenFacets={hiddenFacets}
+                orderBy={orderBy}
+                page={page}
+                facetsLoading={facetsLoading}
+                lazyItemsRemaining={lazyItemsRemaining}
+              >
+                <LoadingOverlay loading={showLoading}>
+                  <div
+                    data-af-onimpression={searchId ? true : undefined}
+                    data-af-search-id={searchId}
+                    className={`${
+                      handles.loadingOverlay
+                    } w-100 flex flex-column flex-grow-1 ${generateBlockClass(
+                      styles['container--layout'],
+                      blockClass
+                    )}`}
+                  >
+                    {children}
+                  </div>
+                </LoadingOverlay>
+              </SearchResultContainer>
+            </ContextProviders>
+          </FilterToggleContext.Provider>
         </SearchPageStateDispatch.Provider>
       </SearchPageStateContext.Provider>
     </SearchPageContext.Provider>
