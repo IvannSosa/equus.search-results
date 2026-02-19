@@ -235,23 +235,16 @@ const FilterOptionTemplate = ({
 
   const containerClassName = classNames(
     handles.filter__container,
-    { [`${styles.filter__container}--${id}`]: id },
-    'bb b--muted-4'
+    { [`${styles.filter__container}--${id}`]: id }
   )
 
-  const titleContainerClassName = classNames(handles.filter, 'pv5', {
+  const titleContainerClassName = classNames(handles.filter, {
     [handles.filterSelected]: selected,
     [handles.filterAvailable]: !selected,
     [handles.filterIsOpen]: isOpen,
   })
 
-  const titleClassName = classNames(
-    handles.filterTitle,
-    'f5 flex items-center justify-between',
-    {
-      ttu: selected,
-    }
-  )
+  const titleClassName = classNames(handles.filterTitle)
 
   return (
     <div className={containerClassName} ref={filterRef}>
@@ -284,10 +277,7 @@ const FilterOptionTemplate = ({
             </span>
             {collapsable && (
               <span
-                className={classNames(
-                  handles.filterIcon,
-                  'flex items-center ph5 c-muted-3'
-                )}
+                className={handles.filterIcon}
               >
                 <IconCaret orientation={isOpen ? 'up' : 'down'} size={14} />
               </span>
@@ -295,7 +285,7 @@ const FilterOptionTemplate = ({
           </div>
         </div>
         {appliedFiltersOverview === 'show' && filters && !selected && (
-          <div className={classNames(handles.filterSelectedFilters, 'f6')}>
+          <div className={handles.filterSelectedFilters}>
             {filters
               .filter(facet => facet.selected)
               .map(facet => facet.name)
@@ -305,8 +295,7 @@ const FilterOptionTemplate = ({
       </div>
       <div
         className={classNames(handles.filterTemplateOverflow, {
-          'overflow-y-auto': collapsable,
-          pb5: !collapsable || isOpen,
+          [handles.filterIsOpen]: isOpen,
         })}
         ref={scrollable}
         data-testid="scrollable-element"

@@ -66,6 +66,32 @@
 }
 
 .filter__container {
+  border-bottom: 1px solid #e2e2e2;
+}
+
+.filter {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.filterTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.filterIcon {
+  display: flex;
+  align-items: center;
+}
+
+.filterTemplateOverflow {
+  overflow-y: auto;
+}
+
+.filterSelectedFilters {
+  font-size: 0.875rem;
 }
 
 .resultGallery {
