@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import React, { memo } from 'react'
+import React, { memo, useMemo } from 'react'
 import { useCssHandles, applyModifiers } from 'vtex.css-handles'
 import classNames from 'classnames'
 import { useBanners } from './GalleryBanners'
@@ -10,9 +10,19 @@ import GalleryItem from './GalleryLayoutItem'
 import type { Product } from '../Gallery'
 import type { PreferredSKU } from '../GalleryLayout'
 import styles from '../searchResult.css'
-import { pathOr } from 'ramda'
 
 const CSS_HANDLES = ['galleryItem'] as const
+
+interface ResolvedBanner {
+  banner: {
+    image: string
+    imageMobile?: string
+    url: string
+    alt: string
+  }
+  position: number | undefined
+  widthPosition: number
+}
 
 interface GalleryLayoutRowProps {
   currentLayoutName: string
@@ -41,45 +51,42 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
   preferredSKU,
 }) => {
   const handles = useCssHandles(CSS_HANDLES)
-  const banners = useBanners();
-  const { searchQuery, page } = useSearchPage();
-  const { isMobile } = useDevice();
-  const maxItems = pathOr(10, ['data', 'productSearch', 'recordsFiltered'], searchQuery);
-  
-  // Limit items per row to 2 on mobile
-  const effectiveItemsPerRow = isMobile ? Math.min(itemsPerRow, 2) : itemsPerRow;
+  const banners = useBanners()
+  const { page } = useSearchPage()
+  const { isMobile } = useDevice()
 
-  const finalBanners = banners?.reduce((acc, banner) => {
-    // Use mobile settings if on mobile, otherwise use desktop settings
-    const position = isMobile ? (banner.positionMobile || banner.position) : banner.position
-    const widthPosition = isMobile ? (banner.widthPositionMobile || banner.widthPosition) : banner.widthPosition
-    const repeatBanner = isMobile ? (banner.repeatBannerMobile !== undefined ? banner.repeatBannerMobile : banner.repeatBanner) : banner.repeatBanner
-    
-    if (repeatBanner) {
-      // Repeat every N positions where N is the banner position
-      const interval = Number(position)
-      for (let i = 0; i <= maxItems; i++) {
-        const repeatPosition = interval * i
-        if (repeatPosition <= 100) {
-          acc.push({
-            banner: banner,
-            position: repeatPosition,
-            widthPosition: 100 / effectiveItemsPerRow * Number(widthPosition)
-          })
+  console.log('banners', banners)
+  const currentPage = page || 1
+  const effectiveItemsPerRow = isMobile ? Math.min(itemsPerRow, 2) : itemsPerRow
+  const pageSize = products.length || effectiveItemsPerRow
+
+  const finalBanners = useMemo(() => {
+    if (!banners?.length) return [] as ResolvedBanner[]
+
+    return banners.reduce((acc, banner) => {
+      const position = isMobile ? (banner.positionMobile || banner.position) : banner.position
+      const widthPosition = isMobile ? (banner.widthPositionMobile || banner.widthPosition) : banner.widthPosition
+      const repeatBanner = isMobile
+        ? (banner.repeatBannerMobile !== undefined ? banner.repeatBannerMobile : banner.repeatBanner)
+        : banner.repeatBanner
+
+      const widthPercent = (100 / effectiveItemsPerRow) * Number(widthPosition || 1)
+
+      if (repeatBanner && position) {
+        const interval = Number(position)
+        if (interval > 0) {
+          for (let i = 1; i * interval <= 200; i++) {
+            acc.push({ banner, position: i * interval, widthPosition: widthPercent })
+          }
         }
+      } else {
+        acc.push({ banner, position, widthPosition: widthPercent })
       }
-    } else {
-      acc.push({
-        banner: banner,
-        position: position,
-        widthPosition: 100 / effectiveItemsPerRow * Number(widthPosition)
-      })
-    }
-    
-    return acc
-  }, [] as any[])
 
-  
+      return acc
+    }, [] as ResolvedBanner[])
+  }, [banners, isMobile, effectiveItemsPerRow])
+
   const style = {
     flexBasis: `${100 / effectiveItemsPerRow}%`,
     maxWidth: `${100 / effectiveItemsPerRow}%`,
@@ -94,52 +101,74 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
     return dummyElement
   }
 
-  return (
-    <>
-      {products.map((product, index) => {
-        const absoluteProductIndex = rowIndex * effectiveItemsPerRow + index + 1
-        // Calculate global position considering pagination
-        const globalPosition = (page - 1) * maxItems + absoluteProductIndex
+  const items: React.ReactNode[] = []
 
-        // Check if there's a banner for this global position
-        const bannerForPosition = finalBanners?.find(banner => banner.position === globalPosition)
+  products.forEach((product, index) => {
+    const absoluteProductIndex = rowIndex * effectiveItemsPerRow + index + 1
+    const globalPosition = (currentPage - 1) * pageSize + absoluteProductIndex
 
-        if (bannerForPosition) {
-          return (
-            <div key={`banner-${absoluteProductIndex}`} className={styles.bannerItem} style={{width: `${bannerForPosition.widthPosition}%`}}>
-              <a className={styles.bannerUrl} href={bannerForPosition.banner.url}>
-                <img className={styles.bannerImage} src={isMobile ? bannerForPosition.banner.imageMobile : bannerForPosition.banner.image} alt={bannerForPosition.banner.alt} />
-              </a>
-            </div>
-          )
-        }
+    // Insert banner BEFORE this product if a banner targets this global position
+    const bannerForPosition = finalBanners.find(b => b.position === globalPosition)
 
-        return (
+    if (bannerForPosition) {
+      const bannerSrc = isMobile
+        ? (bannerForPosition.banner.imageMobile || bannerForPosition.banner.image)
+        : bannerForPosition.banner.image
+
+      if (bannerSrc) {
+        const imgElement = (
+          <img
+            className={styles.bannerImage}
+            src={bannerSrc}
+            alt={bannerForPosition.banner.alt || ''}
+          />
+        )
+
+        items.push(
           <div
-            key={product.cacheId}
-            style={style}
-            className={classNames(
-              applyModifiers(handles.galleryItem, [
-                displayMode,
-                currentLayoutName,
-              ]),
-              'pa4'
-            )}
+            key={`banner-${globalPosition}`}
+            className={styles.bannerItem}
+            style={{ width: `${bannerForPosition.widthPosition}%` }}
           >
-            <GalleryItem
-              GalleryItemComponent={GalleryItemComponent}
-              item={product}
-              summary={summary}
-              displayMode={displayMode}
-              position={absoluteProductIndex}
-              listName={listName}
-              preferredSKU={preferredSKU}
-            />
+            {bannerForPosition.banner.url ? (
+              <a className={styles.bannerUrl} href={bannerForPosition.banner.url}>
+                {imgElement}
+              </a>
+            ) : (
+              imgElement
+            )}
           </div>
         )
-      })}
-    </>
-  )
+      }
+    }
+
+    // Always render the product (banners insert, never replace)
+    items.push(
+      <div
+        key={product.cacheId}
+        style={style}
+        className={classNames(
+          applyModifiers(handles.galleryItem, [
+            displayMode,
+            currentLayoutName,
+          ]),
+          'pa4'
+        )}
+      >
+        <GalleryItem
+          GalleryItemComponent={GalleryItemComponent}
+          item={product}
+          summary={summary}
+          displayMode={displayMode}
+          position={absoluteProductIndex}
+          listName={listName}
+          preferredSKU={preferredSKU}
+        />
+      </div>
+    )
+  })
+
+  return <>{items}</>
 }
 
 export default memo(GalleryLayoutRow)
