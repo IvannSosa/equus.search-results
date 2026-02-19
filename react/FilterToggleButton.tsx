@@ -66,7 +66,7 @@ const FilterToggleButton: React.FC<FilterToggleButtonProps> = () => {
   )
 }
 
-FilterToggleButton.schema = {
+;(FilterToggleButton as any).schema = {
   title: 'admin/editor.search-result.filter-toggle.title',
 }
 
