@@ -1,0 +1,79 @@
+{
+  "projectName": "search-result",
+  "projectOwner": "vtex-apps",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "docs/README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "grupo-exito-ecommerce",
+      "name": "grupo-exito-ecommerce",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/46934781?v=4",
+      "profile": "https://github.com/grupo-exito-ecommerce",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ygorneves10",
+      "name": "Ygor Neves",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/39542011?v=4",
+      "profile": "https://github.com/ygorneves10",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "marcosewbank",
+      "name": "Marcos André Suarez Ewbank",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/27689698?v=4",
+      "profile": "https://github.com/marcosewbank",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "BeatrizMiranda",
+      "name": "Beatriz Miranda",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/28959326?v=4",
+      "profile": "https://github.com/BeatrizMiranda",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "felipeireslan",
+      "name": "felipeireslan",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/47363947?v=4",
+      "profile": "https://github.com/felipeireslan",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "juliomoreira",
+      "name": "Julio Moreira",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/1207017?v=4",
+      "profile": "https://juliomoreira.pro",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "anto90fg",
+      "name": "Antonio Cervelione",
+      "avatar_url": "https://avatars.githubusercontent.com/u/73878310?v=4",
+      "profile": "https://github.com/anto90fg",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true
+}

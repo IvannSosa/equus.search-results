@@ -1,0 +1,182 @@
+{
+  "search-result-banners": {
+    "component": "GalleryBanners"
+  },
+  "search-result": {
+    "allowed": [
+      "not-found",
+      "breadcrumb",
+      "filter-navigator",
+      "total-products",
+      "order-by",
+      "search-title",
+      "rich-text",
+      "search-products-progress-bar"
+    ],
+    "required": ["gallery"],
+    "component": "index"
+  },
+  "filter-navigator": {
+    "component": "FilterNavigatorLegacy"
+  },
+  "filter-navigator.v1": {
+    "component": "FilterNavigatorLegacy"
+  },
+  "filter-navigator.v2": {
+    "component": "FilterNavigator",
+    "allowed": ["shop-review-summary", "sidebar-close-button"]
+  },
+  "gallery": {
+    "composition": "children",
+    "allowed": ["product-summary"],
+    "component": "Gallery"
+  },
+  "gallery-layout-switcher": {
+    "component": "GalleryLayoutSwitcher",
+    "composition": "children"
+  },
+  "gallery-layout-option": {
+    "component": "GalleryLayoutOption",
+    "composition": "children"
+  },
+  "not-found": {
+    "allowed": ["shelf"],
+    "component": "NotFoundSearch"
+  },
+  "order-by": {
+    "component": "OrderBy"
+  },
+  "total-products": {
+    "component": "TotalProducts"
+  },
+  "search-title": {
+    "component": "SearchTitle"
+  },
+  "search-result-layout": {
+    "allowed": [
+      "search-result-layout.desktop",
+      "search-result-layout.mobile",
+      "search-not-found-layout"
+    ],
+    "component": "SearchResultLayout"
+  },
+  "search-result-layout.customQuery": {
+    "allowed": [
+      "search-result-layout.desktop",
+      "search-result-layout.mobile",
+      "search-not-found-layout"
+    ],
+    "component": "SearchResultLayoutCustomQuery"
+  },
+  "search-layout-switcher": {
+    "component": "LayoutModeSwitcherFlexible"
+  },
+  "search-content": {
+    "required": ["gallery", "not-found"],
+    "component": "SearchContent"
+  },
+  "search-fetch-more": {
+    "component": "FetchMore",
+    "content": {
+      "$ref": "app:arredo.search-result#/definitions/FetchMore"
+    }
+  },
+  "search-fetch-previous": {
+    "component": "FetchPrevious",
+    "content": {
+      "$ref": "app:arredo.search-result#/definitions/FetchPrevious"
+    }
+  },
+  "search-result-layout.desktop": {
+    "allowed": [
+      "breadcrumb.search",
+      "filter-navigator.v3",
+      "filter-toggle-button",
+      "total-products.v2",
+      "order-by.v2",
+      "search-title.v2",
+      "rich-text",
+      "info-card",
+      "flex-layout",
+      "tab-layout",
+      "tab-list",
+      "tab-content",
+      "search-fetch-previous",
+      "search-fetch-more",
+      "search-content",
+      "search-products-count-per-page",
+      "search-blog-articles-preview",
+      "search-blog-articles-list"
+    ],
+    "composition": "children",
+    "component": "SearchResultFlexible"
+  },
+  "search-result-layout.mobile": {
+    "allowed": [
+      "breadcrumb.search",
+      "filter-navigator.v3",
+      "filter-toggle-button",
+      "total-products.v2",
+      "order-by.v2",
+      "search-title.v2",
+      "rich-text",
+      "info-card",
+      "flex-layout",
+      "tab-layout",
+      "drawer",
+      "search-layout-switcher",
+      "search-fetch-previous",
+      "search-fetch-more",
+      "search-content",
+      "search-products-count-per-page",
+      "search-blog-articles-preview",
+      "search-blog-articles-list"
+    ],
+    "composition": "children",
+    "component": "SearchResultFlexibleMobile",
+    "device": "mobile"
+  },
+  "search-not-found-layout": {
+    "allowed": [
+      "breadcrumb.search",
+      "search-title.v2",
+      "rich-text",
+      "info-card",
+      "flex-layout",
+      "not-found"
+    ],
+    "composition": "children",
+    "component": "NotFoundLayout"
+  },
+  "search-products-count-per-page": {
+    "component": "ProductCountPerPage"
+  },
+  "search-products-progress-bar": {
+    "component": "ProductsProgressBar"
+  },
+  "order-by.v2": {
+    "component": "OrderByFlexible",
+    "content": {
+      "$ref": "app:arredo.search-result#/definitions/OrderBy"
+    }
+  },
+  "filter-navigator.v3": {
+    "component": "FilterNavigatorFlexible",
+    "allowed": ["sidebar-close-button"]
+  },
+  "total-products.v2": {
+    "component": "TotalProductsFlexible",
+    "content": {
+      "$ref": "app:arredo.search-result#/definitions/TotalProducts"
+    }
+  },
+  "search-title.v2": {
+    "component": "SearchTitleFlexible"
+  },
+  "sidebar-close-button": {
+    "component": "SidebarCloseButton"
+  },
+  "filter-toggle-button": {
+    "component": "FilterToggleButton"
+  }
+}
