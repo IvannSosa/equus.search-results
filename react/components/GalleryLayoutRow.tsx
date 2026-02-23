@@ -55,7 +55,7 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
   const { page } = useSearchPage()
   const { isMobile } = useDevice()
 
-  console.log('banners', banners)
+  console.log('page', page)
   const currentPage = page || 1
   const effectiveItemsPerRow = isMobile ? Math.min(itemsPerRow, 2) : itemsPerRow
   const pageSize = products.length || effectiveItemsPerRow

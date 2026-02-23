@@ -28,11 +28,9 @@ const Gallery: React.FC<
     route: { routeId },
     query: runtimeQuery
   } = useRuntime()
-  const { searchQuery } = useSearchPage()
-  const [orderGallery, setOrderGallery] = useState<OrderGalleryItem[]>([])
-  const query = pathOr("", ['query'], searchQuery?.variables) as string;
   const hasExistingOrder = runtimeQuery?.order && runtimeQuery.order !== ''
 
+  console.log('props', props)
   if ('layouts' in props && props.layouts.length > 0) {
     const {
       layouts,
@@ -44,76 +42,15 @@ const Gallery: React.FC<
       ...slots
     } = props as GalleryLayoutPropsWithSlots
 
-    // Función para reordenar productos basado en el scoring
-    const reorderProductsByScoring = (products: Product[], orderData: OrderGalleryItem[]): Product[] => {
-      if (!orderData.length || !products.length) return products
-
-      // Crear un mapa de scoring por productId
-      const scoringMap = new Map<string, number>()
-      orderData.forEach(item => {
-        scoringMap.set(item.productId, item.scoring)
-      })
-
-      // Separar productos con scoring y sin scoring
-      const productsWithScoring: Array<{ product: Product; scoring: number }> = []
-      const productsWithoutScoring: Product[] = []
-
-      products.forEach(product => {
-        const scoring = scoringMap.get(product.productId)
-        if (scoring !== undefined) {
-          productsWithScoring.push({ product, scoring })
-        } else {
-          productsWithoutScoring.push(product)
-        }
-      })
-
-      // Ordenar productos con scoring (menor scoring = mayor prioridad)
-      productsWithScoring.sort((a, b) => a.scoring - b.scoring)
-
-      // Combinar: productos ordenados por scoring + productos sin scoring al final
-      return [
-        ...productsWithScoring.map(item => item.product),
-        ...productsWithoutScoring
-      ]
-    }
-
-    // Memoizar productos reordenados - solo si no hay orden existente
-    const reorderedProducts = useMemo(() => {
-      // Si ya existe un orden en runtimeQuery, usar productos originales
-      if (hasExistingOrder) return products
-
-      // Si no hay orden existente, aplicar nuestro ordenamiento personalizado
-      return reorderProductsByScoring(products, orderGallery)
-    }, [products, orderGallery, hasExistingOrder])
-
-    useEffect(() => {
-      if (!props?.orderByCSV) return
-      const loadOrderGallery = async () => {
-        try {
-          const {data} = await axios.get(`/api/dataentities/OG/search?category=${query}&_fields=category,orderGallery`)
-          if(data?.length && data?.[0]?.orderGallery?.length){
-            setOrderGallery(data[0].orderGallery)
-          } else{
-            console.warn('No se encuentra ordenamiento personalizado para:', query)
-            setOrderGallery([])
-          }
-        } catch (error) {
-          console.error('Error al cargar ordenamiento personalizado:', error)
-          setOrderGallery([])
-        }
-      }
-      loadOrderGallery()
-    }, [query, props?.orderByCSV])
-
     return (
       <Fragment>
         {!routeId.includes('store.search') && (
-          <ProductListStructuredData products={reorderedProducts} />
+          <ProductListStructuredData products={products} />
         )}
         <GalleryLayout
           layouts={layouts}
           lazyItemsRemaining={lazyItemsRemaining}
-          products={reorderedProducts}
+          products={products}
           showingFacets={showingFacets}
           summary={summary}
           slots={slots}
