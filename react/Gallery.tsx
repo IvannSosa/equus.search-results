@@ -1,18 +1,10 @@
-import React, { Fragment, useEffect, useState, useMemo } from 'react'
+import React, { Fragment } from 'react'
 import { ProductList as ProductListStructuredData } from 'vtex.structured-data'
 import { useRuntime } from 'vtex.render-runtime'
 import GalleryLayout from './GalleryLayout'
 import type { GalleryLayoutProps, Slots } from './GalleryLayout'
 import type { GalleryProps as GalleryLegacyProps } from './GalleryLegacy'
 import GalleryLegacy from './GalleryLegacy'
-import { useSearchPage } from 'vtex.search-page-context/SearchPageContext'
-import { pathOr } from 'ramda'
-import axios from 'axios'
-// Interfaces para el orden de la galería
-interface OrderGalleryItem {
-  productId: string
-  scoring: number
-}
 
 /*
  * This type receives Slots directly, instead of using the 'slots' prop to do it.
@@ -24,11 +16,7 @@ type GalleryLayoutPropsWithSlots = Omit<GalleryLayoutProps, 'slots'> & Slots
 const Gallery: React.FC<
   GalleryLegacyProps | GalleryLayoutPropsWithSlots
 > = props => {
-  const {
-    route: { routeId },
-    query: runtimeQuery
-  } = useRuntime()
-  const hasExistingOrder = runtimeQuery?.order && runtimeQuery.order !== ''
+  const { route: { routeId } } = useRuntime()
 
   console.log('props', props)
   if ('layouts' in props && props.layouts.length > 0) {
