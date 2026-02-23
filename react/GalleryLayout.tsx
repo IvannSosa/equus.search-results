@@ -69,6 +69,13 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   const searchPageStateDispatch = useSearchPageStateDispatch()
   const { filtersVisible } = useFilterToggle()
 
+  console.log('products', {  layouts,
+    lazyItemsRemaining,
+    products,
+    showingFacets,
+    summary,
+    preferredSKU,
+    slots})
   const breadcrumb = useBreadcrumb()
   const searchTitle = useSearchTitle(breadcrumb ?? [], { matchFt: true }).trim()
 
@@ -129,6 +136,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
     return rows
   }, [itemsPerRow, products])
 
+  console.log({layouts})
   if (!layouts || layouts.length === 0) {
     return null
   }

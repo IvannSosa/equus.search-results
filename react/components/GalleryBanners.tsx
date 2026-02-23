@@ -30,7 +30,7 @@ const GalleryBanners = ({
 }: BannersContextProps) => {
   return (
     <BannersContext.Provider value={banners}>
-      <div>{children}</div>
+      {children}
     </BannersContext.Provider>
   )
 }
