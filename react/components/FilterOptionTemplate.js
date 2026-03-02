@@ -260,7 +260,7 @@ const FilterOptionTemplate = ({
           <div className={titleClassName}>
             <span className={`${handles.filterTitleSpan}`}>
               {title}
-              {isClearButtonVisible && (
+              {/*isClearButtonVisible && (
                 <span className="ml2">
                   <Tag
                     size="small"
@@ -273,25 +273,43 @@ const FilterOptionTemplate = ({
                     <FormattedMessage id="store/search-result.filter-button.clear" />
                   </Tag>
                 </span>
-              )}
+              )*/}
             </span>
             {collapsable && (
               <span
                 className={handles.filterIcon}
               >
-                <IconCaret orientation={isOpen ? 'up' : 'down'} size={14} />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  style={{
+                    transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s ease-in-out',
+                  }}
+                >
+                  <path
+                    d="M3.5 5.25L7 8.75L10.5 5.25"
+                    stroke="#3E3E3E"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </span>
             )}
           </div>
         </div>
-        {appliedFiltersOverview === 'show' && filters && !selected && (
+        {/*appliedFiltersOverview === 'show' && filters && !selected && (
           <div className={handles.filterSelectedFilters}>
             {filters
               .filter(facet => facet.selected)
               .map(facet => facet.name)
               .join(', ')}
           </div>
-        )}
+        )*/}
       </div>
       <div
         className={classNames(handles.filterTemplateOverflow, {
