@@ -61,7 +61,6 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
   const { page } = useSearchPage()
   const { isMobile } = useDevice()
 
-  console.log('page', page)
   const currentPage = page || 1
   const effectiveItemsPerRow = isMobile ? Math.min(itemsPerRow, 2) : itemsPerRow
   const pageSize = products.length || effectiveItemsPerRow
@@ -154,8 +153,8 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
       ? {
           ...style,
           opacity: 0,
-          animation: `galleryItemFadeIn 200ms ease-in forwards`,
-          animationDelay: `${globalIndex * 50}ms`,
+          animation: `galleryItemFadeIn 250ms ease-out forwards`,
+          animationDelay: `${globalIndex * 40}ms`,
         }
       : style
 

@@ -337,7 +337,7 @@ const FilterSidebar = ({
               size="regular"
               onClick={() => handleClearFilters()}
             >
-              <FormattedMessage id="store/search-result.filter-button.clear" />
+              Borrar filtros
             </Button>
           </div>
           <div
@@ -349,7 +349,7 @@ const FilterSidebar = ({
               size="regular"
               onClick={() => handleApply()}
             >
-              <FormattedMessage id="store/search-result.filter-button.apply" />
+              Aplicar filtros
             </Button>
           </div>
           {totalProductsOnMobile === 'show' && recordsFiltered && (

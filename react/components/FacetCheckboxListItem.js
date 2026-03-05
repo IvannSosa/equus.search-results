@@ -72,9 +72,7 @@ const FacetCheckboxListItem = ({
     >
       <label
         htmlFor={name}
-        className={classNames(handles.filterCheckboxLabel, {
-          'o-50': shouldDisable,
-        })}
+        className={handles.filterCheckboxLabel}
       >
         <input
           type="checkbox"
@@ -92,7 +90,7 @@ const FacetCheckboxListItem = ({
           }}
           name={name}
           value={name}
-          disabled={shouldDisable}
+          disabled={shouldDisable && !facet.selected}
           className="o-0 absolute"
           style={{ width: 0, height: 0 }}
         />

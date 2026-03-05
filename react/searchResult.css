@@ -410,6 +410,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+
+  svg {
+    width: auto;
+    height: auto;
+  }
 }
 
 .orderByModalContent {

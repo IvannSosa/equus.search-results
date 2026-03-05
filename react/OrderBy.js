@@ -10,10 +10,6 @@ export const SORT_OPTIONS = [
     label: 'store/ordenation.relevance',
   },
   {
-    value: 'OrderByTopSaleDESC',
-    label: 'store/ordenation.sales',
-  },
-  {
     value: 'OrderByReleaseDateDESC',
     label: 'store/ordenation.release.date',
   },
@@ -22,12 +18,16 @@ export const SORT_OPTIONS = [
     label: 'store/ordenation.discount',
   },
   {
+    value: 'OrderByPriceASC',
+    label: 'store/ordenation.price.ascending',
+  },
+  {
     value: 'OrderByPriceDESC',
     label: 'store/ordenation.price.descending',
   },
   {
-    value: 'OrderByPriceASC',
-    label: 'store/ordenation.price.ascending',
+    value: 'OrderByTopSaleDESC',
+    label: 'store/ordenation.sales',
   },
   {
     value: 'OrderByNameASC',

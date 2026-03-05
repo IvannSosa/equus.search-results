@@ -110,5 +110,8 @@
   "admin/editor.search-result.fetch-previous": "Load previous",
   "admin/editor.search-result.fetch-button.button-behavior": "Button behavior",
   "admin/editor.search-result.fetch-button.button-behavior.button": "Button",
-  "admin/editor.search-result.fetch-button.button-behavior.link-to-page": "Link to page - Improves SEO, may change how the button looks"
+  "admin/editor.search-result.fetch-button.button-behavior.link-to-page": "Link to page - Improves SEO, may change how the button looks",
+  "store/search-result.filter-toggle.show": "Show filters",
+  "store/search-result.filter-toggle.hide": "Hide filters",
+  "admin/editor.search-result.filter-toggle.title": "Filter toggle button"
 }

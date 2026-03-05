@@ -189,7 +189,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
     <ProductListProvider listName={listName as string}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes galleryItemFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
+          from { opacity: 0; transform: translateY(6px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes logoSpin {
@@ -198,11 +198,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
         }
         @keyframes logoFadeIn {
           from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes logoFadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
+          to { opacity: 0.8; }
         }
       `}} />
       <div style={{ position: 'relative' }}>
@@ -214,7 +210,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
             justifyContent: 'center',
             zIndex: 10,
             pointerEvents: 'none',
-            animation: 'logoFadeIn 200ms ease-in forwards',
+            animation: 'logoFadeIn 150ms ease-out forwards',
           }}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -222,7 +218,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
               height="37"
               viewBox="0 0 37 37"
               fill="none"
-              style={{ animation: 'logoSpin 0.8s linear infinite' }}
+              style={{ animation: 'logoSpin 1s ease-in-out infinite' }}
             >
               <circle cx="7.53704" cy="7.53704" r="7.53704" fill="#6A6A6A" />
               <circle cx="29.4628" cy="7.53704" r="7.53704" fill="#6A6A6A" />
@@ -236,7 +232,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           className={galleryClasses}
           style={gridPhase === 'fadeOut' ? {
             opacity: 0,
-            transition: 'opacity 100ms ease-out',
+            transition: 'opacity 150ms ease-in-out',
           } : undefined}
         >
           {galleryRows.map((rowProducts, index) => (

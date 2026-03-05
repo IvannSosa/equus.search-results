@@ -98,34 +98,6 @@ const AccordionFilterItem = ({
               <span className={handles.accordionFilterItemTitle}>
                 {getFilterTitle(title, intl)}
               </span>
-              {quantitySelected !== 0 && (
-                <div
-                  className={classNames(
-                    handles.accordionFilterItemTag,
-                    'dib ml3'
-                  )}
-                >
-                  <Tag>{quantitySelected}</Tag>
-                </div>
-              )}
-              {quantitySelected > 0 && showClearByFilter && (
-                <span
-                  className={classNames(
-                    handles.accordionFilterItemTag,
-                    'dib ml3'
-                  )}
-                >
-                  <Tag
-                    size="small"
-                    onClick={e => {
-                      e.stopPropagation()
-                      onClearFilter && onClearFilter(facetKey)
-                    }}
-                  >
-                    <FormattedMessage id="store/search-result.filter-button.clear" />
-                  </Tag>
-                </span>
-              )}
               <span
                 className={`${handles.accordionFilterItemIcon} fr`}
                 style={{
