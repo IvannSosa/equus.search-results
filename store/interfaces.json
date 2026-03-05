@@ -131,7 +131,8 @@
       "search-content",
       "search-products-count-per-page",
       "search-blog-articles-preview",
-      "search-blog-articles-list"
+      "search-blog-articles-list",
+      "applied-filter-chips"
     ],
     "composition": "children",
     "component": "SearchResultFlexibleMobile",

@@ -36,6 +36,10 @@ interface GalleryLayoutRowProps {
   listName: string
   /** Logic to enable which SKU will be the selected item */
   preferredSKU?: PreferredSKU
+  /** Fade animation phase: 'idle' | 'fadeOut' | 'staggerIn' */
+  gridPhase?: string
+  /** Base product index for stagger delay calculation */
+  baseIndex?: number
 }
 
 const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
@@ -49,6 +53,8 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
   rowIndex,
   listName,
   preferredSKU,
+  gridPhase = 'idle',
+  baseIndex = 0,
 }) => {
   const handles = useCssHandles(CSS_HANDLES)
   const banners = useBanners()
@@ -143,10 +149,20 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
     }
 
     // Always render the product (banners insert, never replace)
+    const globalIndex = baseIndex + index
+    const staggerStyle = gridPhase === 'staggerIn'
+      ? {
+          ...style,
+          opacity: 0,
+          animation: `galleryItemFadeIn 200ms ease-in forwards`,
+          animationDelay: `${globalIndex * 50}ms`,
+        }
+      : style
+
     items.push(
       <div
         key={product.cacheId}
-        style={style}
+        style={staggerStyle}
         className={classNames(
           applyModifiers(handles.galleryItem, [
             displayMode,

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, Fragment, useRef } from 'react'
 import { FormattedMessage } from 'react-intl'
 import { ExtensionPoint } from 'vtex.render-runtime'
 import { Button } from 'vtex.styleguide'
-import { IconFilter } from 'vtex.store-icons'
 import { useCssHandles } from 'vtex.css-handles'
 import { useSearchPage } from 'vtex.search-page-context/SearchPageContext'
 import { usePixel } from 'vtex.pixel-manager'
@@ -262,13 +261,22 @@ const FilterSidebar = ({
         )}
         onClick={handleOpen}
       >
-        <span
-          className={`${handles.filterPopupTitle} c-on-base t-action--small ml-auto`}
-        >
-          <FormattedMessage id="store/search-result.filter-action.title" />
-        </span>
-        <span className={`${handles.filterPopupArrowIcon} ml-auto pl3 pt2`}>
-          <IconFilter size={16} viewBox="0 0 17 17" />
+        <span className={`${handles.filterPopupArrowIcon} flex items-center`}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+          >
+            <path
+              d="M2.66663 4L13.3333 4M3.99996 8L12 8M5.99996 12L9.99996 12"
+              stroke="#3E3E3E"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
 
           {showQuantityBadgeOnMobile && selectedFacetsLength > 0 && (
             <span
@@ -277,6 +285,11 @@ const FilterSidebar = ({
               {selectedFacetsLength}
             </span>
           )}
+        </span>
+        <span
+          className={`${handles.filterPopupTitle} c-on-base t-action--small pl3`}
+        >
+          <FormattedMessage id="store/search-result.filter-action.title" />
         </span>
       </button>
 
@@ -308,6 +321,7 @@ const FilterSidebar = ({
             priceRangeLayout={priceRangeLayout}
             onOpenPostalCodeModal={onOpenPostalCodeModal}
             onOpenPickupModal={onOpenPickupModal}
+            onClose={handleClose}
           />
           <ExtensionPoint id="sidebar-close-button" onClose={handleClose} />
         </FilterNavigatorContext.Provider>

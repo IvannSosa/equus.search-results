@@ -12,7 +12,7 @@ const CSS_HANDLES = [
   'appliedFiltersClearAll',
 ]
 
-const NON_FILTER_MAPS = ['c', 'category-1', 'category-2', 'category-3', 'category-4', 'ft', 'seller', 'productClusterIds']
+const NON_FILTER_MAPS = ['c', 'category-1', 'ft', 'seller', 'productClusterIds']
 
 const AppliedFilterChips = () => {
   const handles = useCssHandles(CSS_HANDLES)

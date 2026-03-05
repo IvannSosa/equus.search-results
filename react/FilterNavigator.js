@@ -14,7 +14,7 @@ import PostalCodeModal from 'vtex.shipping-option-components/PostalCodeModal'
 import PickupModal from 'vtex.shipping-option-components/PickupModal'
 
 import FilterSidebar from './components/FilterSidebar'
-import SelectedFilters from './components/SelectedFilters'
+// import SelectedFilters from './components/SelectedFilters'
 import AvailableFilters from './components/AvailableFilters'
 import DepartmentFilters from './components/DepartmentFilters'
 import {
@@ -45,6 +45,7 @@ const LAYOUT_TYPES = {
 const DRAWER_DIRECTION_MOBILE = {
   drawerRight: 'drawerRight',
   drawerLeft: 'drawerLeft',
+  drawerBottom: 'drawerBottom',
 }
 
 const getSelectedCategories = tree => {
@@ -208,30 +209,11 @@ const FilterNavigator = ({
 
   const filterClasses = classNames({
     'flex items-center justify-center flex-auto h-100': mobileLayout,
-    dn: loading,
   })
 
   return (
     <Fragment>
-      {loading && !mobileLayout ? (
-        <div className="mv5">
-          <ContentLoader
-            style={{
-              width: '230px',
-              height: '320px',
-            }}
-            width="230"
-            height="320"
-            y="0"
-            x="0"
-          >
-            <rect width="100%" height="1em" />
-            <rect width="100%" height="8em" y="1.5em" />
-            <rect width="100%" height="1em" y="10.5em" />
-            <rect width="100%" height="8em" y="12em" />
-          </ContentLoader>
-        </div>
-      ) : null}
+      {/* Skeleton loader removed — filters stay visible during loading */}
 
       {mobileLayout ? (
         <div className={styles.filters}>
@@ -276,14 +258,7 @@ const FilterNavigator = ({
                 filtersTitleHtmlTag={filtersTitleHtmlTag}
               />
             </div>
-            <SelectedFilters
-              filters={selectedFilters}
-              preventRouteChange={preventRouteChange}
-              navigateToFacet={navigateToFacet}
-              onOpenPostalCodeModal={() => setIsPostalCodeModalOpen(true)}
-              onOpenPickupModal={() => setisPickupModalOpen(true)}
-              showShippingFacet={showShippingFacet}
-            />
+            {/* SelectedFilters ("Filtrado por") removed — not in Figma design */}
             <DepartmentFilters
               title={CATEGORIES_TITLE}
               tree={tree}

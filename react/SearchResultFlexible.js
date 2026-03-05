@@ -235,7 +235,7 @@ const SearchResultFlexible = ({
                 facetsLoading={facetsLoading}
                 lazyItemsRemaining={lazyItemsRemaining}
               >
-                <LoadingOverlay loading={showLoading}>
+                <LoadingOverlay loading={false}>
                   <div
                     data-af-onimpression={searchId ? true : undefined}
                     data-af-search-id={searchId}

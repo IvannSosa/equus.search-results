@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { useIntl } from 'react-intl'
 import classNames from 'classnames'
-import { IconCaret } from 'vtex.store-icons'
+import { IconCaret, IconClose } from 'vtex.store-icons'
 import { useRuntime } from 'vtex.render-runtime'
 import { useCssHandles } from 'vtex.css-handles'
 import { Spinner } from 'vtex.styleguide'
@@ -20,6 +20,7 @@ const CSS_HANDLES = [
   'filterBreadcrumbsText',
   'filterBreadcrumbsList',
   'filterLoadingOverlay',
+  'filterCloseButton',
 ]
 
 const CATEGORIES_TITLE = 'store/search.filter.title.categories'
@@ -45,6 +46,7 @@ const AccordionFilterContainer = ({
   priceRangeLayout,
   onOpenPostalCodeModal,
   onOpenPickupModal,
+  onClose,
 }) => {
   const intl = useIntl()
   const { getSettings, setQuery } = useRuntime()
@@ -98,41 +100,55 @@ const AccordionFilterContainer = ({
       <div
         className={classNames(
           styles.filterAccordionBreadcrumbs,
-          'pointer flex flex-row items-center pa5 bg-base w-100 z-max bb b--muted-4'
+          'pointer flex flex-row items-center justify-between pa5 bg-base w-100 z-max bb b--muted-4'
         )}
       >
-        <div
-          role="button"
-          tabIndex={0}
-          className={`${handles.filterBreadcrumbsContent} pv4 flex items-center`}
-          onClick={() => setOpenItem(null)}
-          onKeyDown={handleKeyDown}
-        >
+        <div className="flex items-center">
           <div
-            className={classNames(
-              `${handles.filterBreadcrumbsText} t-heading-4`,
-              {
-                'c-muted-2': openItem,
-                'c-on-base': !openItem,
-              }
-            )}
+            role="button"
+            tabIndex={0}
+            className={`${handles.filterBreadcrumbsContent} pv4 flex items-center`}
+            onClick={() => setOpenItem(null)}
+            onKeyDown={handleKeyDown}
           >
-            {intl.formatMessage({
-              id: 'store/search-result.filter-breadcrumbs.primary',
-            })}
-          </div>
-        </div>
-        {openItem && (
-          <div
-            className={`${handles.filterBreadcrumbsItem} pv4 flex items-center`}
-          >
-            <IconCaret orientation="right" size={13} />
             <div
-              className={`${handles.filterBreadcrumbsItemName} pl3 t-heading-4 c-on-base`}
+              className={classNames(
+                `${handles.filterBreadcrumbsText} t-heading-4`,
+                {
+                  'c-muted-2': openItem,
+                  'c-on-base': !openItem,
+                }
+              )}
             >
-              {intl.formatMessage({ id: openItem })}
+              {intl.formatMessage({
+                id: 'store/search-result.filter-breadcrumbs.primary',
+              })}
             </div>
           </div>
+          {openItem && (
+            <div
+              className={`${handles.filterBreadcrumbsItem} pv4 flex items-center`}
+            >
+              <IconCaret orientation="right" size={13} />
+              <div
+                className={`${handles.filterBreadcrumbsItemName} pl3 t-heading-4 c-on-base`}
+              >
+                {intl.formatMessage({ id: openItem })}
+              </div>
+            </div>
+          )}
+        </div>
+        {onClose && (
+          <button
+            className={`${handles.filterCloseButton} pointer bg-transparent bn pa2 flex items-center c-on-base`}
+            onClick={onClose}
+            aria-label={intl.formatMessage({
+              id: 'store/search-result.filter-button.close',
+              defaultMessage: 'Cerrar filtros',
+            })}
+          >
+            <IconClose size={16} type="line" />
+          </button>
         )}
       </div>
 
@@ -268,6 +284,8 @@ AccordionFilterContainer.propTypes = {
   onChangePriceRange: PropTypes.func,
   onOpenPostalCodeModal: PropTypes.func,
   onOpenPickupModal: PropTypes.func,
+  /** Callback to close the sidebar */
+  onClose: PropTypes.func,
 }
 
 export default AccordionFilterContainer
