@@ -152,13 +152,6 @@ const AppliedFilterChips = () => {
           </span>
         </button>
       ))}
-      <button
-        className={handles.appliedFiltersClearAll}
-        onClick={clearAll}
-        type="button"
-      >
-        Borrar todo
-      </button>
     </div>
   )
 }

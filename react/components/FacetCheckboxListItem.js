@@ -66,7 +66,7 @@ const FacetCheckboxListItem = ({
     <div
       className={classNames(
         applyModifiers(styles.filterAccordionItemBox, slugifiedName),
-        'pr4 pt3 items-center flex bb b--muted-5'
+        'pr4 items-center flex'
       )}
       style={{ hyphens: 'auto', wordBreak: 'break-word' }}
     >

@@ -23,6 +23,7 @@ import { useBreadcrumb } from './hooks/useBreadcrumb'
 import { useSearchTitle } from './hooks/useSearchTitle'
 
 const LAZY_RENDER_THRESHOLD = 2
+const STAGGER_DURATION_MS = 1500
 
 const CSS_HANDLES = ['gallery'] as const
 
@@ -71,33 +72,44 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   const { filtersVisible } = useFilterToggle()
   const { searchQuery } = useSearchPage()
 
-  // Fade animation: fade-out container + loader, stagger fade-in per item
+  // Fade animation: loader on filter apply, stagger-in when products arrive
   const isFilterLoading = !!(searchQuery?.loading && !isFetchingMore)
   const [gridPhase, setGridPhase] = useState<'idle' | 'fadeOut' | 'staggerIn'>('idle')
   const prevLoadingRef = useRef(false)
   const staggerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    // Loading just started → always fade out (cancel any running stagger)
-    if (isFilterLoading && !prevLoadingRef.current) {
+    const wasLoading = prevLoadingRef.current
+    prevLoadingRef.current = isFilterLoading
+
+    // Loading just started (filter applied) → fade out + show loader
+    if (isFilterLoading && !wasLoading) {
       if (staggerTimerRef.current) {
         clearTimeout(staggerTimerRef.current)
         staggerTimerRef.current = null
       }
       setGridPhase('fadeOut')
+      return
     }
 
     // Loading just ended → stagger in
-    if (!isFilterLoading && prevLoadingRef.current) {
+    if (!isFilterLoading && wasLoading) {
       setGridPhase('staggerIn')
       staggerTimerRef.current = setTimeout(() => {
         setGridPhase('idle')
         staggerTimerRef.current = null
-      }, 1500)
+      }, STAGGER_DURATION_MS)
     }
-
-    prevLoadingRef.current = isFilterLoading
   }, [isFilterLoading])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (staggerTimerRef.current) {
+        clearTimeout(staggerTimerRef.current)
+      }
+    }
+  }, [])
 
   const breadcrumb = useBreadcrumb()
   const searchTitle = useSearchTitle(breadcrumb ?? [], { matchFt: true }).trim()
@@ -204,10 +216,15 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
       <div style={{ position: 'relative' }}>
         {gridPhase === 'fadeOut' && (
           <div style={{
-            position: 'sticky',
-            top: '40vh',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
             display: 'flex',
+            alignItems: 'flex-start',
             justifyContent: 'center',
+            paddingTop: '8rem',
             zIndex: 10,
             pointerEvents: 'none',
             animation: 'logoFadeIn 150ms ease-out forwards',
@@ -231,7 +248,7 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
           id="gallery-layout-container"
           className={galleryClasses}
           style={gridPhase === 'fadeOut' ? {
-            opacity: 0,
+            opacity: 0.3,
             transition: 'opacity 150ms ease-in-out',
           } : undefined}
         >

@@ -68,7 +68,7 @@ const AccordionFilterItem = ({
 
             return (
               <div
-                className={`${searchResult.filterAccordionItemBox} pr4 pt3 items-center flex bb b--muted-5`}
+                className={`${searchResult.filterAccordionItemBox} pr4 pt3 items-center flex`}
                 key={name}
               >
                 <Checkbox
