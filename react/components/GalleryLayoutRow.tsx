@@ -5,11 +5,53 @@ import classNames from 'classnames'
 import { useBanners } from './GalleryBanners'
 import { useRenderOnView } from '../hooks/useRenderOnView'
 import { useSearchPage } from 'vtex.search-page-context/SearchPageContext'
+import { useRuntime } from 'vtex.render-runtime'
 import { useDevice } from 'vtex.device-detector'
 import GalleryItem from './GalleryLayoutItem'
 import type { Product } from '../Gallery'
 import type { PreferredSKU } from '../GalleryLayout'
 import styles from '../searchResult.css'
+
+/* ── Category / Collection matcher ── */
+
+const FACETS_LIST = ['category-1', 'category-2', 'category-3', 'c', 'productClusterIds']
+
+const getCurrentPath = (route: Record<string, any> | null): string => {
+  const canonical = route?.canonicalPath || route?.path
+  if (canonical && typeof canonical === 'string') {
+    return canonical.split('?')[0].replace(/\/$/, '').toLowerCase() || '/'
+  }
+  if (typeof window !== 'undefined' && window.location) {
+    return window.location.pathname.split('?')[0].replace(/\/$/, '').toLowerCase() || '/'
+  }
+  return ''
+}
+
+const matchesCurrentContext = (
+  matchId: string | undefined,
+  currentPath: string,
+  categoryId: string | null,
+  collectionId: string | null,
+  productClusterIds: string[],
+  categoryPath: string
+): boolean => {
+  if (!matchId) return true // sin matchId → se muestra en todas las PLPs
+
+  const id = matchId.trim()
+  if (!id) return true
+
+  if (id.startsWith('/')) {
+    const normalized = id.toLowerCase().replace(/\/$/, '')
+    return currentPath === normalized || currentPath.startsWith(normalized + '/')
+  }
+
+  if (categoryId && id === categoryId) return true
+  if (collectionId && id === collectionId) return true
+  if (productClusterIds.includes(id)) return true
+  if (categoryPath && id === categoryPath) return true
+
+  return false
+}
 
 const CSS_HANDLES = ['galleryItem'] as const
 
@@ -57,9 +99,43 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
   baseIndex = 0,
 }) => {
   const handles = useCssHandles(CSS_HANDLES)
-  const banners = useBanners()
-  const { page } = useSearchPage()
+  const allBanners = useBanners()
+  const { searchQuery, page, params } = useSearchPage()
+  const { route } = useRuntime()
   const { isMobile } = useDevice()
+
+  const selectedFacets = searchQuery?.variables?.selectedFacets as
+    | Array<{ key: string; value: string }>
+    | undefined
+
+  const banners = useMemo(() => {
+    const currentPath = getCurrentPath(route)
+    const categoryId = params?.id ?? params?.term ?? null
+    const collectionId = searchQuery?.variables?.query ?? null
+    const productClusterIds = (selectedFacets || [])
+      .filter((f) => f.key === 'productClusterIds')
+      .map((f) => f.value)
+    const categoryPath = (selectedFacets || [])
+      .filter((f) => FACETS_LIST.includes(f.key))
+      .map((f) => f.value)
+      .join('/')
+
+    return allBanners.filter((b) => {
+      // Filtro por layout: si tiene layoutId, solo mostrar en ese layout
+      if (b.layoutId && b.layoutId.trim()) {
+        if (b.layoutId.trim() !== currentLayoutName) return false
+      }
+
+      return matchesCurrentContext(
+        b.matchId,
+        currentPath,
+        categoryId,
+        collectionId,
+        productClusterIds,
+        categoryPath
+      )
+    })
+  }, [allBanners, route, params, searchQuery, selectedFacets, currentLayoutName])
 
   const currentPage = page || 1
   const effectiveItemsPerRow = isMobile ? Math.min(itemsPerRow, 2) : itemsPerRow
@@ -132,7 +208,13 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
         items.push(
           <div
             key={`banner-${globalPosition}`}
-            className={styles.bannerItem}
+            className={classNames(
+              styles.bannerItem,
+              applyModifiers(handles.galleryItem, [
+                displayMode,
+                currentLayoutName,
+              ])
+            )}
             style={{ width: `${bannerForPosition.widthPosition}%` }}
           >
             {bannerForPosition.banner.url ? (

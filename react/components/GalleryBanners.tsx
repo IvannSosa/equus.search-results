@@ -1,6 +1,8 @@
 import React, { createContext, useContext } from 'react'
 
 interface BannerProps {
+    matchId?: string
+    layoutId?: string
     image: string
     url: string
     alt: string
@@ -44,6 +46,16 @@ GalleryBanners.schema = {
           items: {
             type: "object",
             properties: {
+              "matchId": {
+                title: 'Categoría / Colección / Path',
+                type: 'string',
+                description: 'ID de categoría, colección, path (/sabanas), o ruta de facets (dormitorio/sabanas). Vacío = se muestra en todas las PLPs.',
+              },
+              "layoutId": {
+                title: 'Layout de galería',
+                type: 'string',
+                description: 'Nombre del layout donde mostrar este banner (ej: grid, list). Vacío = se muestra en todos los layouts.',
+              },
               "image": {
                 title: 'Banner a mostrar',
                 type: 'string',
