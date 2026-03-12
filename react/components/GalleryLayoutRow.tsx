@@ -120,10 +120,21 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
       .map((f) => f.value)
       .join('/')
 
+    // Si hay banners específicos para el layout actual, solo mostrar esos
+    // Si no hay ninguno específico, mostrar los genéricos (sin layoutId)
+    const hasLayoutSpecific = allBanners.some(
+      (b) => b.layoutId?.trim() === currentLayoutName
+    )
+
     return allBanners.filter((b) => {
-      // Filtro por layout: si tiene layoutId, solo mostrar en ese layout
-      if (b.layoutId && b.layoutId.trim()) {
-        if (b.layoutId.trim() !== currentLayoutName) return false
+      const bannerLayout = b.layoutId?.trim()
+
+      if (hasLayoutSpecific) {
+        // Hay banners para este layout → solo esos
+        if (bannerLayout !== currentLayoutName) return false
+      } else {
+        // No hay banners específicos → solo los genéricos (sin layoutId)
+        if (bannerLayout) return false
       }
 
       return matchesCurrentContext(
