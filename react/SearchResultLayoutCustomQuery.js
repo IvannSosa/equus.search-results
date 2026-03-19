@@ -76,7 +76,7 @@ const SearchResultLayoutCustomQuery = props => {
       facetsBehavior={props.querySchema.facetsBehavior}
       skusFilter={props.querySchema.skusFilter}
       installmentCriteria={props.querySchema.installmentCriteria}
-      query={props.query}
+      query={{ ...props.query, ...query }}
       __unstableProductOriginVtex={
         props.querySchema.__unstableProductOriginVtex
       }
