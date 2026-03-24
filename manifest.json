@@ -1,7 +1,7 @@
 {
   "name": "search-result",
   "vendor": "arredo",
-  "version": "3.139.13",
+  "version": "3.139.14",
   "title": "Arredo Search Result",
   "description": "A search result wrapper component",
   "mustUpdateAt": "2019-04-25",
