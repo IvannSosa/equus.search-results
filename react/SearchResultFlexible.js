@@ -46,6 +46,7 @@ const SearchResultFlexible = ({
   pagination = PAGINATION_TYPE.SHOW_MORE,
   mobileLayout = { mode1: 'normal' },
   defaultGalleryLayout,
+  defaultOrderBy,
   showProductsCount,
   blockClass,
   preventRouteChange = false,
@@ -88,7 +89,18 @@ const SearchResultFlexible = ({
     deliveries,
   } = facets
 
-  const { query: runtimeQuery } = useRuntime()
+  const { query: runtimeQuery, setQuery } = useRuntime()
+
+  const appliedDefault = useRef(false)
+
+  useEffect(() => {
+    if (appliedDefault.current) return
+    if (!defaultOrderBy) return
+    if (runtimeQuery?.order) return
+
+    appliedDefault.current = true
+    setQuery({ order: defaultOrderBy }, { replace: true })
+  }, [defaultOrderBy, runtimeQuery, setQuery])
 
   const filters = useMemo(
     () =>
@@ -260,6 +272,37 @@ const SearchResultFlexible = ({
 
 SearchResultFlexible.schema = {
   title: 'admin/editor.search-result-desktop.title',
+  type: 'object',
+  properties: {
+    defaultOrderBy: {
+      title: 'Orden por defecto',
+      description: 'Orden inicial de productos cuando el usuario no ha seleccionado uno',
+      type: 'string',
+      enum: [
+        '',
+        'OrderByScoreDESC',
+        'OrderByTopSaleDESC',
+        'OrderByReleaseDateDESC',
+        'OrderByBestDiscountDESC',
+        'OrderByPriceDESC',
+        'OrderByPriceASC',
+        'OrderByNameASC',
+        'OrderByNameDESC',
+      ],
+      enumNames: [
+        'Por defecto (Relevancia)',
+        'Relevancia',
+        'Más vendidos',
+        'Más recientes',
+        'Mayor descuento',
+        'Mayor precio',
+        'Menor precio',
+        'Nombre A-Z',
+        'Nombre Z-A',
+      ],
+      default: '',
+    },
+  },
 }
 
 export default SearchResultFlexible

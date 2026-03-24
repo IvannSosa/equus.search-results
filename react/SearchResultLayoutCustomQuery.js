@@ -74,6 +74,7 @@ const SearchResultLayoutCustomQuery = props => {
       priceRangeField={props.querySchema.priceRangeField}
       hideUnavailableItems={props.querySchema.hideUnavailableItems}
       facetsBehavior={props.querySchema.facetsBehavior}
+      skipFacets={props.querySchema.skipFacets}
       skusFilter={props.querySchema.skusFilter}
       installmentCriteria={props.querySchema.installmentCriteria}
       query={{ ...props.query, ...query }}

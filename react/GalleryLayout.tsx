@@ -23,7 +23,10 @@ import { useBreadcrumb } from './hooks/useBreadcrumb'
 import { useSearchTitle } from './hooks/useSearchTitle'
 
 const LAZY_RENDER_THRESHOLD = 2
-const STAGGER_DURATION_MS = 1500
+// Visible products = ~8 (2 rows × 4 cols). Each has 40ms delay + 250ms animation.
+// Formula: min(visibleCount * 40 + 250, 800) — caps at 800ms vs old fixed 1500ms.
+const STAGGER_VISIBLE_ESTIMATE = 8
+const STAGGER_DURATION_MS = Math.min(STAGGER_VISIBLE_ESTIMATE * 40 + 250, 800)
 
 const CSS_HANDLES = ['gallery'] as const
 

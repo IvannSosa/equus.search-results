@@ -276,6 +276,7 @@ const SearchQuery = ({
   installmentCriteria,
   excludedPaymentSystems,
   includedPaymentSystems,
+  skipFacets: skipFacetsProp,
   children,
   operator: operatorQuery,
   fuzzy: fuzzyQuery,
@@ -331,7 +332,7 @@ const SearchQuery = ({
   const facetsArgs = {
     facetQuery: query,
     facetMap: map,
-    withFacets: includeFacets(map, query),
+    withFacets: !skipFacetsProp && includeFacets(map, query),
   }
 
   const { getSession } = useSession()
@@ -457,7 +458,7 @@ const SearchQuery = ({
 
     const timeout = setTimeout(() => {
       fetchRemainingItems()
-    }, 500)
+    }, 150)
 
     return () => {
       clearTimeout(timeout)

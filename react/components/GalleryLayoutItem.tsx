@@ -124,17 +124,19 @@ const GalleryLayoutItem: React.FC<GalleryLayoutItemProps> = ({
   const { searchQuery } = useSearchPage()
   const { query } = useRuntime()
 
+  // Memoize spec filters from URL — same `query` object for all gallery items,
+  // so this avoids re-parsing map/query strings inside every product's useMemo.
+  const activeFilters = useMemo(() => getActiveSpecFilters(query ?? {}), [query])
+
   const product = useMemo(() => {
     const mapped = ProductSummary.mapCatalogProductToProductSummary(
       item,
       preferredSKU
     )
 
-    const filters = getActiveSpecFilters(query ?? {})
+    if (!activeFilters.length || !mapped.items?.length) return mapped
 
-    if (!filters.length || !mapped.items?.length) return mapped
-
-    const matchingItem = findMatchingItem(mapped.items, filters)
+    const matchingItem = findMatchingItem(mapped.items, activeFilters)
 
     if (!matchingItem) return mapped
 
@@ -151,7 +153,7 @@ const GalleryLayoutItem: React.FC<GalleryLayoutItemProps> = ({
       },
       selectedItem: matchingItem,
     }
-  }, [item, preferredSKU, query])
+  }, [item, preferredSKU, activeFilters])
 
   const handleClick = useCallback(() => {
     push({
