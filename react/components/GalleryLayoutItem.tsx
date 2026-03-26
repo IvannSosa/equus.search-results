@@ -38,21 +38,21 @@ function slugToComparable(slug: string): string {
   return normalize(slug).replace(/[-_\s]+/g, '')
 }
 
-interface SpecFilter {
-  key: string
-  value: string
-}
-
-function getActiveSpecFilters(query: Record<string, string>): SpecFilter[] {
+/**
+ * Groups spec filters by key. Same key = OR (any value matches),
+ * different keys = AND (all keys must match).
+ * E.g. medida=twin + medida=queen + color=rojo →
+ *   { medida: ["twin","queen"], color: ["rojo"] }
+ */
+function getActiveSpecFilterGroups(
+  query: Record<string, string>
+): Map<string, string[]> {
   const map = query?.map?.split(',') ?? []
   const queryPath = query?.query?.split('/').filter(Boolean) ?? []
 
-  if (!map.length || !queryPath.length) return []
+  if (!map.length || !queryPath.length) return new Map()
 
-  // Deduplicate by key — last value wins.
-  // When user selects "Queen" then "Twin" for the same "medida" filter,
-  // the URL has both but only the last one should drive SKU selection.
-  const filtersByKey = new Map<string, SpecFilter>()
+  const groups = new Map<string, string[]>()
 
   for (let i = 0; i < map.length; i++) {
     const key = map[i]?.toLowerCase()
@@ -61,10 +61,16 @@ function getActiveSpecFilters(query: Record<string, string>): SpecFilter[] {
     if (!key || !value) continue
     if (NON_SPEC_KEYS.has(key)) continue
 
-    filtersByKey.set(key, { key, value })
+    const existing = groups.get(key)
+
+    if (existing) {
+      existing.push(value)
+    } else {
+      groups.set(key, [value])
+    }
   }
 
-  return Array.from(filtersByKey.values())
+  return groups
 }
 
 /**
@@ -86,37 +92,125 @@ function getVariationNames(items: any[]): Set<string> {
   return names
 }
 
-function findMatchingItem(items: any[], filters: SpecFilter[]): any | null {
-  if (!items?.length || !filters.length) return null
+function findMatchingItem(
+  items: any[],
+  filterGroups: Map<string, string[]>
+): any | null {
+  if (!items?.length || !filterGroups.size) return null
 
   const variationNames = getVariationNames(items)
 
-  // Only keep filters that match actual SKU variations
-  const variationFilters = filters.filter((f) =>
-    variationNames.has(slugToComparable(f.key))
-  )
+  // Only keep filter groups whose key is a real SKU variation.
+  // Values are stored in URL order — last added = last in array = user's latest selection.
+  const variationGroups = new Map<string, string[]>()
 
-  if (!variationFilters.length) return null
+  for (const [key, values] of filterGroups) {
+    if (!variationNames.has(slugToComparable(key))) continue
 
-  return items.find((item: any) => {
-    return variationFilters.every((filter) => {
-      const filterKeyComparable = slugToComparable(filter.key)
-      const filterValueComparable = slugToComparable(filter.value)
+    // Reverse so the last selected value has highest priority
+    variationGroups.set(
+      slugToComparable(key),
+      values.map(slugToComparable).reverse()
+    )
+  }
 
-      if (item.variations?.length) {
-        return item.variations.some((v: any) => {
-          const nameComparable = slugToComparable(v.name ?? '')
-          if (nameComparable !== filterKeyComparable) return false
+  if (!variationGroups.size) return null
+
+  // Try each value combination in priority order (last selected first).
+  // For each variation key, iterate values from last→first and return
+  // the first SKU that matches.
+  for (const [filterKey, filterValues] of variationGroups) {
+    for (const filterValue of filterValues) {
+      const match = items.find((item: any) => {
+        if (!item.variations?.length) return false
+
+        // Must match this specific value for this key
+        const matchesTarget = item.variations.some((v: any) => {
+          if (slugToComparable(v.name ?? '') !== filterKey) return false
 
           return v.values?.some(
-            (val: string) => slugToComparable(val) === filterValueComparable
+            (val: string) => slugToComparable(val) === filterValue
           )
         })
-      }
 
-      return false
-    })
-  })
+        if (!matchesTarget) return false
+
+        // Must also match at least one value for every OTHER variation key
+        return [...variationGroups].every(([otherKey, otherValues]) => {
+          if (otherKey === filterKey) return true
+
+          return item.variations.some((v: any) => {
+            if (slugToComparable(v.name ?? '') !== otherKey) return false
+
+            return v.values?.some((val: string) =>
+              otherValues.includes(slugToComparable(val))
+            )
+          })
+        })
+      })
+
+      if (match) return match
+    }
+  }
+
+  return null
+}
+
+/**
+ * Fallback for fulltext search: matches words from the search term
+ * against variation values to select the right SKU.
+ * E.g. searching "juego sábanas queen" → "queen" matches "medida" variation.
+ * Only checks real SKU variations (color, medida, talle), not product specs.
+ */
+function findMatchingItemBySearchTerm(
+  items: any[],
+  searchTerm: string
+): any | null {
+  if (!items?.length || !searchTerm) return null
+
+  const variationNames = getVariationNames(items)
+
+  if (!variationNames.size) return null
+
+  const words = searchTerm
+    .split(/\s+/)
+    .map(slugToComparable)
+    .filter((w) => w.length > 2)
+
+  if (!words.length) return null
+
+  let bestMatch: any | null = null
+  let bestScore = 0
+
+  for (const item of items) {
+    if (!item.variations?.length) continue
+
+    let score = 0
+
+    for (const v of item.variations) {
+      // Only check variations that are real SKU differentiators
+      if (!variationNames.has(slugToComparable(v.name ?? ''))) continue
+
+      for (const val of v.values ?? []) {
+        const valComparable = slugToComparable(val)
+
+        for (const word of words) {
+          if (valComparable === word) {
+            score += 2
+          } else if (valComparable.includes(word) || word.includes(valComparable)) {
+            score += 1
+          }
+        }
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score
+      bestMatch = item
+    }
+  }
+
+  return bestMatch
 }
 
 interface GalleryLayoutItemProps {
@@ -143,9 +237,19 @@ const GalleryLayoutItem: React.FC<GalleryLayoutItemProps> = ({
   const { searchQuery } = useSearchPage()
   const { query } = useRuntime()
 
-  // Memoize spec filters from URL — same `query` object for all gallery items,
+  // Memoize spec filter groups from URL — same `query` object for all gallery items,
   // so this avoids re-parsing map/query strings inside every product's useMemo.
-  const activeFilters = useMemo(() => getActiveSpecFilters(query ?? {}), [query])
+  const filterGroups = useMemo(
+    () => getActiveSpecFilterGroups(query ?? {}),
+    [query]
+  )
+
+  // Fulltext search term for fallback SKU matching
+  const searchTerm = useMemo(() => {
+    const fullText = searchQuery?.variables?.fullText
+
+    return typeof fullText === 'string' ? fullText : ''
+  }, [searchQuery?.variables?.fullText])
 
   const product = useMemo(() => {
     const mapped = ProductSummary.mapCatalogProductToProductSummary(
@@ -153,9 +257,18 @@ const GalleryLayoutItem: React.FC<GalleryLayoutItemProps> = ({
       preferredSKU
     )
 
-    if (!activeFilters.length || !mapped.items?.length) return mapped
+    if (!mapped.items?.length) return mapped
 
-    const matchingItem = findMatchingItem(mapped.items, activeFilters)
+    // Priority 1: spec filters from URL (PLP with facets)
+    let matchingItem =
+      filterGroups.size > 0
+        ? findMatchingItem(mapped.items, filterGroups)
+        : null
+
+    // Priority 2: fulltext search term fallback
+    if (!matchingItem && searchTerm) {
+      matchingItem = findMatchingItemBySearchTerm(mapped.items, searchTerm)
+    }
 
     if (!matchingItem) return mapped
 
@@ -172,7 +285,7 @@ const GalleryLayoutItem: React.FC<GalleryLayoutItemProps> = ({
       },
       selectedItem: matchingItem,
     }
-  }, [item, preferredSKU, activeFilters])
+  }, [item, preferredSKU, filterGroups, searchTerm])
 
   const handleClick = useCallback(() => {
     push({
