@@ -49,7 +49,10 @@ function getActiveSpecFilters(query: Record<string, string>): SpecFilter[] {
 
   if (!map.length || !queryPath.length) return []
 
-  const filters: SpecFilter[] = []
+  // Deduplicate by key — last value wins.
+  // When user selects "Queen" then "Twin" for the same "medida" filter,
+  // the URL has both but only the last one should drive SKU selection.
+  const filtersByKey = new Map<string, SpecFilter>()
 
   for (let i = 0; i < map.length; i++) {
     const key = map[i]?.toLowerCase()
@@ -58,22 +61,50 @@ function getActiveSpecFilters(query: Record<string, string>): SpecFilter[] {
     if (!key || !value) continue
     if (NON_SPEC_KEYS.has(key)) continue
 
-    filters.push({ key, value })
+    filtersByKey.set(key, { key, value })
   }
 
-  return filters
+  return Array.from(filtersByKey.values())
+}
+
+/**
+ * Collects all variation names across all SKU items.
+ * Only filters whose key matches a real variation should trigger SKU switching
+ * (e.g. "color", "medida", "talle") — NOT product-level specs like "composición".
+ */
+function getVariationNames(items: any[]): Set<string> {
+  const names = new Set<string>()
+
+  for (const item of items) {
+    if (item.variations?.length) {
+      for (const v of item.variations) {
+        if (v.name) names.add(slugToComparable(v.name))
+      }
+    }
+  }
+
+  return names
 }
 
 function findMatchingItem(items: any[], filters: SpecFilter[]): any | null {
   if (!items?.length || !filters.length) return null
 
+  const variationNames = getVariationNames(items)
+
+  // Only keep filters that match actual SKU variations
+  const variationFilters = filters.filter((f) =>
+    variationNames.has(slugToComparable(f.key))
+  )
+
+  if (!variationFilters.length) return null
+
   return items.find((item: any) => {
-    return filters.every((filter) => {
+    return variationFilters.every((filter) => {
       const filterKeyComparable = slugToComparable(filter.key)
       const filterValueComparable = slugToComparable(filter.value)
 
       if (item.variations?.length) {
-        const matchInVariations = item.variations.some((v: any) => {
+        return item.variations.some((v: any) => {
           const nameComparable = slugToComparable(v.name ?? '')
           if (nameComparable !== filterKeyComparable) return false
 
@@ -81,21 +112,9 @@ function findMatchingItem(items: any[], filters: SpecFilter[]): any | null {
             (val: string) => slugToComparable(val) === filterValueComparable
           )
         })
-
-        if (matchInVariations) return true
       }
 
-      const specKeys = Object.keys(item).filter(
-        (k) => Array.isArray(item[k]) && typeof item[k][0] === 'string'
-      )
-
-      return specKeys.some((specKey) => {
-        if (slugToComparable(specKey) !== filterKeyComparable) return false
-
-        return (item[specKey] as string[]).some(
-          (val) => slugToComparable(val) === filterValueComparable
-        )
-      })
+      return false
     })
   })
 }
