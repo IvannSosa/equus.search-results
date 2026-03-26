@@ -40,7 +40,8 @@
     "composition": "children"
   },
   "not-found": {
-    "allowed": ["shelf"],
+    "allowed": ["shelf", "flex-layout"],
+    "composition": "children",
     "component": "NotFoundSearch"
   },
   "order-by": {
