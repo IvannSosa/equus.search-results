@@ -213,6 +213,26 @@ function findMatchingItemBySearchTerm(
   return bestMatch
 }
 
+function findLowestPriceItem(items: any[]): any | null {
+  let lowest: any = null
+  let lowestPrice = Infinity
+
+  for (const item of items) {
+    for (const seller of item.sellers ?? []) {
+      const offer = seller.commertialOffer
+      if (!offer || offer.AvailableQuantity <= 0) continue
+
+      const price = offer.Price > 0 ? offer.Price : offer.sellingPrice ?? 0
+      if (price > 0 && price < lowestPrice) {
+        lowestPrice = price
+        lowest = item
+      }
+    }
+  }
+
+  return lowest
+}
+
 interface GalleryLayoutItemProps {
   GalleryItemComponent: ComponentType<any>
   item: Product
@@ -268,6 +288,11 @@ const GalleryLayoutItem: React.FC<GalleryLayoutItemProps> = ({
     // Priority 2: fulltext search term fallback
     if (!matchingItem && searchTerm) {
       matchingItem = findMatchingItemBySearchTerm(mapped.items, searchTerm)
+    }
+
+    // Priority 3: no filters/search — select the lowest price SKU
+    if (!matchingItem) {
+      matchingItem = findLowestPriceItem(mapped.items)
     }
 
     if (!matchingItem) return mapped
