@@ -60,7 +60,7 @@ const DepartmentFilters = ({
         {showAllDepartments ? (
           <Collapsible
             maxItems={maxItemsDepartment}
-            threshold={1}
+            threshold={2}
             items={tree}
             openLabel="store/filter.more-departments"
             render={category => (

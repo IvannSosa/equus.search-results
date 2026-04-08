@@ -31,6 +31,11 @@
     "allowed": ["product-summary"],
     "component": "Gallery"
   },
+  "sabana-gallery": {
+    "composition": "children",
+    "allowed": ["product-summary"],
+    "component": "SabanaGallery"
+  },
   "gallery-layout-switcher": {
     "component": "GalleryLayoutSwitcher",
     "composition": "children"
@@ -79,13 +84,13 @@
   "search-fetch-more": {
     "component": "FetchMore",
     "content": {
-      "$ref": "app:arredo.search-result#/definitions/FetchMore"
+      "$ref": "app:equusio.search-result#/definitions/FetchMore"
     }
   },
   "search-fetch-previous": {
     "component": "FetchPrevious",
     "content": {
-      "$ref": "app:arredo.search-result#/definitions/FetchPrevious"
+      "$ref": "app:equusio.search-result#/definitions/FetchPrevious"
     }
   },
   "search-result-layout.desktop": {
@@ -164,7 +169,7 @@
   "order-by.v2": {
     "component": "OrderByFlexible",
     "content": {
-      "$ref": "app:arredo.search-result#/definitions/OrderBy"
+      "$ref": "app:equusio.search-result#/definitions/OrderBy"
     }
   },
   "filter-navigator.v3": {
@@ -174,7 +179,7 @@
   "total-products.v2": {
     "component": "TotalProductsFlexible",
     "content": {
-      "$ref": "app:arredo.search-result#/definitions/TotalProducts"
+      "$ref": "app:equusio.search-result#/definitions/TotalProducts"
     }
   },
   "search-title.v2": {

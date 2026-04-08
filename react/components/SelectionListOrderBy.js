@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react'
-import ReactDOM from 'react-dom'
+import React, { useState, useCallback, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { useIntl } from 'react-intl'
 import classNames from 'classnames'
@@ -9,6 +8,8 @@ import { formatIOMessage } from 'vtex.native-types'
 import { IconCaret } from 'vtex.store-icons'
 import { useDevice } from 'vtex.device-detector'
 import { useCssHandles, applyModifiers } from 'vtex.css-handles'
+import { Checkbox } from 'vtex.styleguide'
+import { Collapse } from 'react-collapse'
 import { useRuntime } from 'vtex.render-runtime'
 
 import SelectionListItem from './SelectionListItem'
@@ -22,140 +23,53 @@ const CSS_HANDLES = [
   'orderByText',
   'filterPopupTitle',
   'filterPopupArrowIcon',
-  'orderByModalScrim',
-  'orderByModalContainer',
-  'orderByModalHeader',
-  'orderByModalTitle',
-  'orderByModalClose',
-  'orderByModalContent',
-  'orderByModalRadioItem',
-  'orderByModalRadioCircle',
-  'orderByModalRadioLabel',
-  'orderByModalFooter',
-  'orderByModalApplyButton',
+  'orderByCollapseContainer',
+  'orderByCollapseHeader',
+  'orderByCollapseTitle',
+  'orderByCollapseIcon',
+  'orderByCollapseContent',
+  'orderByCollapseItem',
+  'orderByCollapseCheckbox',
 ]
-
-const OPEN_BODY_CLASS = 'overflow-hidden'
 
 const SelectionListOrderBy = ({
   message = 'store/ordenation.sort-by',
   orderBy,
   options,
   showOrderTitle,
+  collapse = false,
+  collapseTitle = 'store/ordenation.sort-by',
+  initiallyCollapsed = false,
 }) => {
   const intl = useIntl()
-  const { setQuery } = useRuntime()
   const [showDropdown, setShowDropdown] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalVisible, setModalVisible] = useState(false)
-  const [selectedValue, setSelectedValue] = useState(orderBy)
+  const [isCollapsed, setIsCollapsed] = useState(initiallyCollapsed)
   const handles = useCssHandles(CSS_HANDLES)
+  const { setQuery } = useRuntime()
 
   const orderByRef = useRef(null)
-  const modalRef = useRef(null)
 
-  const { isMobile } = useDevice()
-
-  useEffect(() => {
-    setSelectedValue(orderBy)
-  }, [orderBy])
-
-  // Body scroll lock for modal
-  useEffect(() => {
-    if (modalOpen) {
-      document.body.classList.add(OPEN_BODY_CLASS)
-    } else {
-      document.body.classList.remove(OPEN_BODY_CLASS)
-    }
-
-    return () => document.body.classList.remove(OPEN_BODY_CLASS)
-  }, [modalOpen])
-
-  // Escape key closes modal
-  useEffect(() => {
-    if (!modalOpen) return undefined
-
-    const handleEscape = e => {
-      if (e.key === 'Escape') {
-        closeModal()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [modalOpen])
-
-  // Focus trap inside modal
-  useEffect(() => {
-    if (!modalVisible || !modalRef.current) return undefined
-
-    const modal = modalRef.current
-    const focusable = modal.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    )
-
-    if (focusable.length) focusable[0].focus()
-
-    const handleTab = e => {
-      if (e.key !== 'Tab' || !focusable.length) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-
-    modal.addEventListener('keydown', handleTab)
-
-    return () => modal.removeEventListener('keydown', handleTab)
-  }, [modalVisible])
-
-  const openModal = useCallback(() => {
-    setSelectedValue(orderBy)
-    setModalOpen(true)
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setModalVisible(true))
-    })
-  }, [orderBy])
-
-  const closeModal = useCallback(() => {
-    setModalVisible(false)
-    setTimeout(() => {
-      setModalOpen(false)
-      setSelectedValue(orderBy)
-    }, 300)
-  }, [orderBy])
-
-  const handleApplyOrder = useCallback(() => {
-    const value = selectedValue
-
-    setModalVisible(false)
-    setTimeout(() => {
-      setModalOpen(false)
-      if (value !== orderBy) {
-        setQuery({ order: value, page: undefined })
-      }
-    }, 300)
-  }, [selectedValue, orderBy, setQuery])
-
-  // Desktop: toggle dropdown. Mobile: open modal.
-  const handleDropdownBtClick = useCallback(() => {
-    if (isMobile) {
-      openModal()
-    } else {
-      setShowDropdown(prev => !prev)
-    }
-  }, [isMobile, openModal])
+  const handleDropdownBtClick = useCallback(
+    () => setShowDropdown(!showDropdown),
+    [showDropdown]
+  )
 
   const handleOutsideClick = useCallback(() => setShowDropdown(false), [])
 
   useOutsideClick(orderByRef, handleOutsideClick, showDropdown)
+
+  const { isMobile } = useDevice()
+
+  const handleCollapseToggle = useCallback(() => {
+    setIsCollapsed(prevState => !prevState)
+  }, [])
+
+  const handleCollapseOptionClick = useCallback(
+    optionValue => {
+      setQuery({ order: optionValue, page: undefined })
+    },
+    [setQuery]
+  )
 
   const renderOptions = orderByOption => {
     return options.map(option => {
@@ -170,13 +84,40 @@ const SelectionListOrderBy = ({
     })
   }
 
-  const sortByMessage = formatIOMessage({ id: message, intl })
+  const renderCollapseOptions = orderByOption => {
+    return options.map((option, index) => {
+      const isSelected = option.value === orderByOption
 
-  // Strip trailing colon for modal header title
-  const modalTitle =
-    typeof sortByMessage === 'string'
-      ? sortByMessage.replace(/:?\s*$/, '')
-      : sortByMessage
+      return (
+        <div
+          key={option.value}
+          className={classNames(
+            handles.orderByCollapseItem,
+            applyModifiers(handles.orderByCollapseItem, isSelected ? 'selected' : ''),
+            'pr4 pt3 items-center flex bb b--muted-5'
+          )}
+          style={{
+            opacity: isCollapsed ? 0 : 1,
+            transform: isCollapsed ? 'translateY(-10px)' : 'translateY(0)',
+            transition: `opacity 0.3s ease ${index * 0.05}s, transform 0.3s ease ${index * 0.05}s`,
+          }}
+        >
+          <Checkbox
+            className={classNames(handles.orderByCollapseCheckbox, 'mb0')}
+            checked={isSelected}
+            id={`orderBy-${option.value}`}
+            label={option.label}
+            name={`orderBy-${option.value}`}
+            onChange={() => handleCollapseOptionClick(option.value)}
+            value={option.value}
+          />
+        </div>
+      )
+    })
+  }
+
+  const sortByMessage = formatIOMessage({ id: message, intl })
+  const collapseTitleMessage = formatIOMessage({ id: collapseTitle, intl })
 
   const getOptionTitle = useCallback(
     option => {
@@ -187,6 +128,55 @@ const SelectionListOrderBy = ({
     [options]
   )
 
+  // Collapse view
+  if (collapse) {
+    return (
+      <div className={classNames(handles.orderByCollapseContainer, 'w-100')}>
+        <div
+          role="button"
+          tabIndex={0}
+          className={classNames(
+            handles.orderByCollapseHeader,
+            't-body pr5 pv3 pointer bb b--muted-5 outline-0 flex items-center justify-between'
+          )}
+          onClick={handleCollapseToggle}
+          onKeyDown={e => {
+            if (e.key === ' ' || e.key === 'Enter') {
+              handleCollapseToggle()
+            }
+          }}
+        >
+          <span
+            className={classNames(
+              handles.orderByCollapseTitle,
+              'pv4 c-on-base t-heading-5'
+            )}
+          >
+            {collapseTitleMessage}
+          </span>
+          <span
+            className={classNames(handles.orderByCollapseIcon, 'fr')}
+            style={{
+              display: 'inline-flex',
+              transition: 'transform 0.3s ease',
+              transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="6" viewBox="0 0 11 6" fill="none">
+              <path d="M0.5 0.5L5.5 5.5L10.5 0.5" stroke="#1E1E1E" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </div>
+        <Collapse isOpened={!isCollapsed}>
+          <div className={classNames(handles.orderByCollapseContent, 'pl5')}>
+            {renderCollapseOptions(orderBy)}
+          </div>
+        </Collapse>
+      </div>
+    )
+  }
+
+  // Default dropdown view
   const btClass = classNames(
     handles.orderByButton,
     'ph3 pv5 mv0 pointer flex items-center justify-end bg-base c-on-base t-action--small bt br bl bb-0 br2 br--top bw1 w-100 outline-0',
@@ -209,151 +199,6 @@ const SelectionListOrderBy = ({
     handles.orderByDropdown,
     'relative pt1 justify-end w-100 w-auto-ns ml-auto'
   )
-
-  const renderMobileModal = () => {
-    if (typeof document === 'undefined' || !modalOpen) return null
-
-    return ReactDOM.createPortal(
-      <React.Fragment>
-        {/* Scrim overlay */}
-        <div
-          className={classNames(
-            styles.orderByModalScrim,
-            handles.orderByModalScrim
-          )}
-          style={{
-            opacity: modalVisible ? 1 : 0,
-          }}
-          onClick={closeModal}
-          role="presentation"
-        />
-
-        {/* Modal container */}
-        <div
-          ref={modalRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label={modalTitle}
-          className={classNames(
-            styles.orderByModalContainer,
-            handles.orderByModalContainer
-          )}
-          style={{
-            transform: modalVisible ? 'translateY(0)' : 'translateY(100%)',
-          }}
-        >
-          {/* Header */}
-          <div
-            className={classNames(
-              styles.orderByModalHeader,
-              handles.orderByModalHeader
-            )}
-          >
-            <span
-              className={classNames(
-                styles.orderByModalTitle,
-                handles.orderByModalTitle
-              )}
-            >
-              {modalTitle}
-            </span>
-            <button
-              className={classNames(
-                styles.orderByModalClose,
-                handles.orderByModalClose
-              )}
-              onClick={closeModal}
-              aria-label="Cerrar"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="none"
-              >
-                <path
-                  d="M13 1L1 13M1 1L13 13"
-                  stroke="#3E3E3E"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* Radio options */}
-          <div
-            className={classNames(
-              styles.orderByModalContent,
-              handles.orderByModalContent
-            )}
-            role="radiogroup"
-            aria-label={modalTitle}
-          >
-            {options.map(option => {
-              const isSelected = selectedValue === option.value
-
-              return (
-                <button
-                  key={option.value}
-                  role="radio"
-                  aria-checked={isSelected}
-                  className={classNames(
-                    styles.orderByModalRadioItem,
-                    applyModifiers(
-                      handles.orderByModalRadioItem,
-                      isSelected ? 'selected' : ''
-                    )
-                  )}
-                  onClick={() => setSelectedValue(option.value)}
-                >
-                  <span
-                    className={classNames(
-                      styles.orderByModalRadioCircle,
-                      applyModifiers(
-                        handles.orderByModalRadioCircle,
-                        isSelected ? 'selected' : ''
-                      )
-                    )}
-                  />
-                  <span
-                    className={classNames(
-                      styles.orderByModalRadioLabel,
-                      handles.orderByModalRadioLabel
-                    )}
-                  >
-                    {option.label}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Footer */}
-          <div
-            className={classNames(
-              styles.orderByModalFooter,
-              handles.orderByModalFooter
-            )}
-          >
-            <button
-              className={classNames(
-                styles.orderByModalApplyButton,
-                handles.orderByModalApplyButton
-              )}
-              onClick={handleApplyOrder}
-              aria-label="Aplicar orden seleccionada"
-            >
-              Aplicar orden
-            </button>
-          </div>
-        </div>
-      </React.Fragment>,
-      document.body
-    )
-  }
 
   return (
     <div className={dropdownSort} ref={orderByRef}>
@@ -378,11 +223,7 @@ const SelectionListOrderBy = ({
         </span>
       </button>
 
-      {/* Desktop dropdown */}
       <div className={contentClass}>{renderOptions(orderBy)}</div>
-
-      {/* Mobile modal */}
-      {isMobile && renderMobileModal()}
     </div>
   )
 }
@@ -403,6 +244,12 @@ SelectionListOrderBy.propTypes = {
   message: PropTypes.string,
   /** Show or hide order title */
   showOrderTitle: PropTypes.bool,
+  /** Whether to display as a collapsible list with checkboxes */
+  collapse: PropTypes.bool,
+  /** Title to display when collapse is true */
+  collapseTitle: PropTypes.string,
+  /** Whether the collapse starts collapsed */
+  initiallyCollapsed: PropTypes.bool,
 }
 
 export default SelectionListOrderBy

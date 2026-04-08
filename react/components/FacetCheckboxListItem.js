@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import React, { useMemo } from 'react'
-import { applyModifiers, useCssHandles } from 'vtex.css-handles'
+import { applyModifiers } from 'vtex.css-handles'
+import { Checkbox } from 'vtex.styleguide'
 import { usePixel } from 'vtex.pixel-manager'
 import { useIntl } from 'react-intl'
 
@@ -8,8 +9,6 @@ import styles from '../searchResult.css'
 import { pushFilterManipulationPixelEvent } from '../utils/filterManipulationPixelEvents'
 import useShippingActions from '../hooks/useShippingActions'
 import ShippingActionButton from './ShippingActionButton'
-
-const CHECKBOX_HANDLES = ['filterCheckbox', 'filterCheckboxLabel']
 
 const FacetCheckboxListItem = ({
   facet,
@@ -20,7 +19,6 @@ const FacetCheckboxListItem = ({
   onFilterCheck,
 }) => {
   const intl = useIntl()
-  const handles = useCssHandles(CHECKBOX_HANDLES)
 
   const { push } = usePixel()
 
@@ -66,43 +64,29 @@ const FacetCheckboxListItem = ({
     <div
       className={classNames(
         applyModifiers(styles.filterAccordionItemBox, slugifiedName),
-        'pr4 items-center flex'
+        'pr4 pt3 items-center flex bb b--muted-5'
       )}
       style={{ hyphens: 'auto', wordBreak: 'break-word' }}
     >
-      <label
-        htmlFor={name}
-        className={handles.filterCheckboxLabel}
-      >
-        <input
-          type="checkbox"
-          id={name}
-          checked={facet.selected}
-          onChange={() => {
-            pushFilterManipulationPixelEvent({
-              name: facetTitle,
-              value: name,
-              products: searchQuery?.products ?? [],
-              push,
-            })
+      <Checkbox
+        disabled={shouldDisable}
+        className="mb0"
+        checked={facet.selected}
+        id={name}
+        label={facetLabel}
+        name={name}
+        onChange={() => {
+          pushFilterManipulationPixelEvent({
+            name: facetTitle,
+            value: name,
+            products: searchQuery?.products ?? [],
+            push,
+          })
 
-            onFilterCheck({ ...facet, title: facetTitle })
-          }}
-          name={name}
-          value={name}
-          disabled={shouldDisable && !facet.selected}
-          className="o-0 absolute"
-          style={{ width: 0, height: 0 }}
-        />
-        <span
-          className={classNames(
-            handles.filterCheckbox,
-            { [`${handles.filterCheckbox}--checked`]: facet.selected }
-          )}
-          aria-hidden="true"
-        />
-        <span>{facetLabel}</span>
-      </label>
+          onFilterCheck({ ...facet, title: facetTitle })
+        }}
+        value={name}
+      />
     </div>
   )
 }

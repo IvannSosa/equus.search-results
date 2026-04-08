@@ -15,24 +15,13 @@ const SearchContent = () => {
 
   const redirect = path(['data', 'productSearch', 'redirect'], searchQuery)
 
-  // Keep a ref to the last valid products so we can show them behind the loader
-  const prevProductsRef = React.useRef(products)
-
-  if (products.length > 0) {
-    prevProductsRef.current = products
-  }
-
-  // Initial load or redirect — nothing to show yet
-  if (showContentLoader === undefined || redirect) {
+  /* No need to show the spinner if it is loading because
+   the LoadingOverlay already takes care of this */
+  if (showContentLoader === undefined || showContentLoader || redirect) {
     return null
   }
 
-  // Use previous products while loading so the gallery stays visible
-  const displayProducts = showContentLoader
-    ? prevProductsRef.current
-    : products
-
-  if (!displayProducts || displayProducts.length === 0) {
+  if (!products || products.length === 0) {
     return <ExtensionPoint id="not-found" />
   }
 
@@ -40,7 +29,7 @@ const SearchContent = () => {
     <>
       <ExtensionPoint
         id="gallery"
-        products={displayProducts}
+        products={products}
         className="bn"
         mobileLayoutMode={mobileLayout}
         showingFacets={showFacets}

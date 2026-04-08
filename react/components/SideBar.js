@@ -48,13 +48,10 @@ class Sidebar extends Component {
       }
     )
 
-    const isBottom = filtersDrawerDirectionMobile === 'drawerBottom'
-
     const sidebarClasses = classNames(
-      `${searchResult.sidebar} w-auto-ns fixed bg-base shadow-2 flex flex-column`,
-      isBottom ? 'w-100 left-0 bottom-0' : 'h-100 top-0',
-      !isBottom && (this.props.fullWidth ? 'w-100' : 'w-80'),
-      !isBottom && (filtersDrawerDirectionMobile === 'drawerLeft' ? 'right-0' : 'left-0')
+      `${searchResult.sidebar} w-auto-ns h-100 fixed top-0 bg-base shadow-2 flex flex-column`,
+      this.props.fullWidth ? 'w-100' : 'w-80',
+      filtersDrawerDirectionMobile === 'drawerLeft' ? 'right-0' : 'left-0'
     )
 
     return ReactDOM.createPortal(
@@ -67,7 +64,7 @@ class Sidebar extends Component {
         <Animation
           className={sidebarClasses}
           isActive={isOpen}
-          type={isBottom ? 'drawerTop' : filtersDrawerDirectionMobile}
+          type={filtersDrawerDirectionMobile}
         >
           {this.props.children}
         </Animation>
@@ -88,6 +85,6 @@ Sidebar.propTypes = {
   onOutsideClick: PropTypes.func,
   /* The SideBar will occupy the entire length of the window */
   fullWidth: PropTypes.bool,
-  filtersDrawerDirectionMobile: PropTypes.oneOf(['drawerRight', 'drawerLeft', 'drawerBottom']),
+  filtersDrawerDirectionMobile: PropTypes.oneOf(['drawerRight', 'drawerLeft']),
 }
 export default injectIntl(Sidebar)

@@ -13,6 +13,9 @@ const showingAllProductsMessages = defineMessages({
   showingProductsCount: {
     id: 'store/search-result.showing-all-products-count',
   },
+  showingProductsCountText: {
+    id: 'store/search-result.showing-all-products-count-text',
+  },
 })
 
 const showingProductsMessages = defineMessages({
@@ -22,9 +25,12 @@ const showingProductsMessages = defineMessages({
   showingProductsCount: {
     id: 'store/search-result.showing-products-count',
   },
+  showingProductsCountText: {
+    id: 'store/search-result.showing-products-count-text',
+  },
 })
 
-const ProductCountPerPage = () => {
+const ProductCountPerPage = ({ textCount }) => {
   const { searchQuery } = useSearchPage()
 
   const handles = useCssHandles(CSS_HANDLES)
@@ -44,6 +50,27 @@ const ProductCountPerPage = () => {
     products.length === recordsFiltered
       ? showingAllProductsMessages
       : showingProductsMessages
+
+  // Si textCount es true, solo muestra el conteo sin "Mostrando"
+  if (textCount) {
+    return (
+      <div
+        className={`
+          ${handles.showingProducts} tc t-small pt3 c-muted-2
+        `}
+      >
+        <span className={`${handles.showingProductsCount} b`}>
+          <FormattedMessage
+            id={messages.showingProductsCountText.id}
+            values={{
+              productsLoaded: products.length,
+              total: recordsFiltered,
+            }}
+          />
+        </span>
+      </div>
+    )
+  }
 
   return (
     <div

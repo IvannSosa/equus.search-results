@@ -9,16 +9,18 @@ import { getMapQueryString } from './FetchMoreButton'
 
 const CSS_HANDLES = ['buttonShowMore']
 
-const useShowButton = (from, products, loading) => {
+const useShowButton = (from, products, loading, previousPage) => {
   const [showButton, setShowButton] = useState(
-    !!products && from > 0 && products.length > 0
+    !!products && from > 0 && products.length > 0 && previousPage >= 1
   )
 
   useEffect(() => {
     if (!loading) {
-      setShowButton(!!products && from > 0 && products.length > 0)
+      setShowButton(
+        !!products && from > 0 && products.length > 0 && previousPage >= 1
+      )
     }
-  }, [from, products, loading])
+  }, [from, products, loading, previousPage])
 
   return showButton
 }
@@ -34,7 +36,7 @@ const FetchPreviousButton = props => {
   } = props
 
   const isAnchor = htmlElementForButton === 'a'
-  const showButton = useShowButton(from, products, loading)
+  const showButton = useShowButton(from, products, loading, previousPage)
   const handles = useCssHandles(CSS_HANDLES)
   const { searchQuery } = useSearchPage()
   const { query } = useRuntime()

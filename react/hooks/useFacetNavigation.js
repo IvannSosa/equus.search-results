@@ -247,15 +247,20 @@ const useFacetNavigation = (selectedFacets, scrollToTop = 'none') => {
             ? sessionStorage.getItem('searchState') ?? searchState
             : searchState ?? undefined
 
+        const initialQuery = runtimeQuery.initialQuery ?? query
+        const initialMap = runtimeQuery.initialMap ?? map
+
         const queries = {
-          ...(currentMap && { map: `${currentMap}` }),
-          query: `/${isReset ? runtimeQuery.initialQuery : currentQuery}`,
+          ...(isReset
+            ? { map: initialMap }
+            : currentMap && { map: `${currentMap}` }),
+          query: `/${isReset ? initialQuery : currentQuery}`,
           page: undefined,
           fuzzy: fullTextQuery ? fuzzy || undefined : undefined,
           operator: fullTextQuery ? operator || undefined : undefined,
           searchState: state,
-          initialMap: runtimeQuery.initialMap ?? map,
-          initialQuery: runtimeQuery.initialQuery ?? query,
+          initialMap: initialMap,
+          initialQuery: initialQuery,
           ...(isReset ? { priceRange: undefined } : { priceRange }),
         }
 

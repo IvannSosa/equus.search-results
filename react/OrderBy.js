@@ -10,6 +10,10 @@ export const SORT_OPTIONS = [
     label: 'store/ordenation.relevance',
   },
   {
+    value: 'OrderByTopSaleDESC',
+    label: 'store/ordenation.sales',
+  },
+  {
     value: 'OrderByReleaseDateDESC',
     label: 'store/ordenation.release.date',
   },
@@ -18,16 +22,12 @@ export const SORT_OPTIONS = [
     label: 'store/ordenation.discount',
   },
   {
-    value: 'OrderByPriceASC',
-    label: 'store/ordenation.price.ascending',
-  },
-  {
     value: 'OrderByPriceDESC',
     label: 'store/ordenation.price.descending',
   },
   {
-    value: 'OrderByTopSaleDESC',
-    label: 'store/ordenation.sales',
+    value: 'OrderByPriceASC',
+    label: 'store/ordenation.price.ascending',
   },
   {
     value: 'OrderByNameASC',
@@ -45,6 +45,9 @@ const OrderBy = ({
   specificationOptions = [],
   hiddenOptions = [],
   showOrderTitle = true,
+  collapse = false,
+  collapseTitle = 'store/ordenation.sort-by',
+  initiallyCollapsed = false,
 }) => {
   const intl = useIntl()
 
@@ -65,6 +68,9 @@ const OrderBy = ({
       message={message}
       options={sortingOptions}
       showOrderTitle={showOrderTitle}
+      collapse={collapse}
+      collapseTitle={collapseTitle}
+      initiallyCollapsed={initiallyCollapsed}
     />
   )
 }
@@ -80,6 +86,12 @@ OrderBy.propTypes = {
   message: PropTypes.string,
   /** Show or hide order title */
   showOrderTitle: PropTypes.bool,
+  /** Whether to display as a collapsible list with checkboxes */
+  collapse: PropTypes.bool,
+  /** Title to display when collapse is true */
+  collapseTitle: PropTypes.string,
+  /** Whether the collapse starts collapsed */
+  initiallyCollapsed: PropTypes.bool,
 }
 
 export default OrderBy

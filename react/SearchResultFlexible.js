@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react'
+import React, { useMemo, useEffect, useRef } from 'react'
 import {
   SearchPageContext,
   SearchPageStateContext,
@@ -12,7 +12,6 @@ import { pathOr, isEmpty } from 'ramda'
 
 import SearchResultContainer from './components/SearchResultContainer'
 import ContextProviders from './components/ContextProviders'
-import FilterToggleContext from './components/FilterToggleContext'
 import getFilters from './utils/getFilters'
 import LoadingOverlay from './components/LoadingOverlay'
 import { PAGINATION_TYPE } from './constants/paginationType'
@@ -46,7 +45,6 @@ const SearchResultFlexible = ({
   pagination = PAGINATION_TYPE.SHOW_MORE,
   mobileLayout = { mode1: 'normal' },
   defaultGalleryLayout,
-  defaultOrderBy,
   showProductsCount,
   blockClass,
   preventRouteChange = false,
@@ -89,18 +87,7 @@ const SearchResultFlexible = ({
     deliveries,
   } = facets
 
-  const { query: runtimeQuery, setQuery } = useRuntime()
-
-  const appliedDefault = useRef(false)
-
-  useEffect(() => {
-    if (appliedDefault.current) return
-    if (!defaultOrderBy) return
-    if (runtimeQuery?.order) return
-
-    appliedDefault.current = true
-    setQuery({ order: defaultOrderBy }, { replace: true })
-  }, [defaultOrderBy, runtimeQuery, setQuery])
+  const { query: runtimeQuery } = useRuntime()
 
   const filters = useMemo(
     () =>
@@ -143,16 +130,6 @@ const SearchResultFlexible = ({
   })
 
   useShowContentLoader(searchQuery, dispatch)
-
-  const [filtersVisible, setFiltersVisible] = useState(false)
-  const toggleFiltersVisibility = useCallback(() => {
-    setFiltersVisible(prev => !prev)
-  }, [])
-
-  const filterToggleValue = useMemo(
-    () => ({ filtersVisible, toggleFiltersVisibility }),
-    [filtersVisible, toggleFiltersVisibility]
-  )
 
   const settings = useMemo(
     () => ({
@@ -228,42 +205,40 @@ const SearchResultFlexible = ({
     <SearchPageContext.Provider value={context}>
       <SearchPageStateContext.Provider value={state}>
         <SearchPageStateDispatch.Provider value={dispatch}>
-          <FilterToggleContext.Provider value={filterToggleValue}>
-            <ContextProviders
-              queryVariables={searchQuery.variables}
-              settings={settings}
+          <ContextProviders
+            queryVariables={searchQuery.variables}
+            settings={settings}
+          >
+            <SearchResultContainer
+              searchQuery={searchQuery}
+              maxItemsPerPage={maxItemsPerPage}
+              pagination={pagination}
+              mobileLayout={mobileLayout}
+              map={map}
+              params={params}
+              priceRange={priceRange}
+              hiddenFacets={hiddenFacets}
+              orderBy={orderBy}
+              page={page}
+              facetsLoading={facetsLoading}
+              lazyItemsRemaining={lazyItemsRemaining}
             >
-              <SearchResultContainer
-                searchQuery={searchQuery}
-                maxItemsPerPage={maxItemsPerPage}
-                pagination={pagination}
-                mobileLayout={mobileLayout}
-                map={map}
-                params={params}
-                priceRange={priceRange}
-                hiddenFacets={hiddenFacets}
-                orderBy={orderBy}
-                page={page}
-                facetsLoading={facetsLoading}
-                lazyItemsRemaining={lazyItemsRemaining}
-              >
-                <LoadingOverlay loading={false}>
-                  <div
-                    data-af-onimpression={searchId ? true : undefined}
-                    data-af-search-id={searchId}
-                    className={`${
-                      handles.loadingOverlay
-                    } w-100 flex flex-column flex-grow-1 ${generateBlockClass(
-                      styles['container--layout'],
-                      blockClass
-                    )}`}
-                  >
-                    {children}
-                  </div>
-                </LoadingOverlay>
-              </SearchResultContainer>
-            </ContextProviders>
-          </FilterToggleContext.Provider>
+              <LoadingOverlay loading={showLoading}>
+                <div
+                  data-af-onimpression={searchId ? true : undefined}
+                  data-af-search-id={searchId}
+                  className={`${
+                    handles.loadingOverlay
+                  } w-100 flex flex-column flex-grow-1 ${generateBlockClass(
+                    styles['container--layout'],
+                    blockClass
+                  )}`}
+                >
+                  {children}
+                </div>
+              </LoadingOverlay>
+            </SearchResultContainer>
+          </ContextProviders>
         </SearchPageStateDispatch.Provider>
       </SearchPageStateContext.Provider>
     </SearchPageContext.Provider>
@@ -272,37 +247,6 @@ const SearchResultFlexible = ({
 
 SearchResultFlexible.schema = {
   title: 'admin/editor.search-result-desktop.title',
-  type: 'object',
-  properties: {
-    defaultOrderBy: {
-      title: 'Orden por defecto',
-      description: 'Orden inicial de productos cuando el usuario no ha seleccionado uno',
-      type: 'string',
-      enum: [
-        '',
-        'OrderByScoreDESC',
-        'OrderByTopSaleDESC',
-        'OrderByReleaseDateDESC',
-        'OrderByBestDiscountDESC',
-        'OrderByPriceDESC',
-        'OrderByPriceASC',
-        'OrderByNameASC',
-        'OrderByNameDESC',
-      ],
-      enumNames: [
-        'Por defecto (Relevancia)',
-        'Relevancia',
-        'Más vendidos',
-        'Más recientes',
-        'Mayor descuento',
-        'Mayor precio',
-        'Menor precio',
-        'Nombre A-Z',
-        'Nombre Z-A',
-      ],
-      default: '',
-    },
-  },
 }
 
 export default SearchResultFlexible

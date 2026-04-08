@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, { Fragment, useRef, useEffect } from 'react'
+import React, { Fragment } from 'react'
 import { FormattedMessage } from 'react-intl'
 import { ExtensionPoint } from 'vtex.render-runtime'
 import { useCssHandles } from 'vtex.css-handles'
@@ -18,71 +18,16 @@ const CSS_HANDLES = [
 ]
 
 /**
- * Oculta el sidebar de filtros (stretchChildrenWidth sin flex-grow-1)
- * dentro del row plp-content-desktop para que el not-found ocupe
- * el 100% del ancho disponible.
- */
-function hideFilterSidebar(element) {
-  let node = element
-
-  while (node && node !== document.body) {
-    if (
-      node.className &&
-      node.className.includes('flexRowContent') &&
-      node.className.includes('plp-content-desktop')
-    ) {
-      const firstChild = node.firstElementChild
-
-      if (
-        firstChild &&
-        firstChild.className.includes('stretchChildrenWidth') &&
-        !firstChild.className.includes('flex-grow-1')
-      ) {
-        firstChild.style.display = 'none'
-      }
-
-      break
-    }
-
-    node = node.parentElement
-  }
-}
-
-/**
  * Not found page component, rendered when the search doesn't return any
  * products from the API.
- *
- * Si se definen children en el store-theme (composition: "children"),
- * se renderizan en lugar del UI "oops!" por defecto.
  */
-const NotFoundSearch = ({ children }) => {
+const NotFoundSearch = () => {
   const handles = useCssHandles(CSS_HANDLES)
-  const containerRef = useRef(null)
 
   const { params } = useSearchPage()
 
   const term = params?.term ? decodeURI(params?.term) : ''
 
-  const hasChildren = React.Children.count(children) > 0
-
-  // Cuando se muestran los children (diseño 404), ocultar el sidebar
-  // de filtros para que el contenido ocupe el 100% del ancho.
-  useEffect(() => {
-    if (hasChildren && containerRef.current) {
-      hideFilterSidebar(containerRef.current)
-    }
-  }, [hasChildren])
-
-  // Si hay children definidos desde el store-theme, renderizarlos
-  if (hasChildren) {
-    return (
-      <div ref={containerRef} className={`${handles.searchNotFound}`}>
-        {children}
-      </div>
-    )
-  }
-
-  // Fallback: UI "oops!" original
   return (
     <Fragment>
       <div

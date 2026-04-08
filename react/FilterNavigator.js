@@ -14,7 +14,7 @@ import PostalCodeModal from 'vtex.shipping-option-components/PostalCodeModal'
 import PickupModal from 'vtex.shipping-option-components/PickupModal'
 
 import FilterSidebar from './components/FilterSidebar'
-// import SelectedFilters from './components/SelectedFilters'
+import SelectedFilters from './components/SelectedFilters'
 import AvailableFilters from './components/AvailableFilters'
 import DepartmentFilters from './components/DepartmentFilters'
 import {
@@ -34,6 +34,9 @@ const CSS_HANDLES = [
   'filtersWrapper',
   'filtersWrapperMobile',
   'clearAllFilters',
+  'filterButtonsBoxDesktop',
+  'filterClearButtonWrapperDesktop',
+  'filterApplyButtonWrapperDesktop',
 ]
 
 const LAYOUT_TYPES = {
@@ -45,7 +48,6 @@ const LAYOUT_TYPES = {
 const DRAWER_DIRECTION_MOBILE = {
   drawerRight: 'drawerRight',
   drawerLeft: 'drawerLeft',
-  drawerBottom: 'drawerBottom',
 }
 
 const getSelectedCategories = tree => {
@@ -104,6 +106,7 @@ const FilterNavigator = ({
   showClearAllFiltersOnDesktop = false,
   priceRangeLayout = 'slider',
   showQuantityBadgeOnMobile = false,
+  showApplyFiltersButtonOnDesktop = false,
 }) => {
   const intl = useIntl()
   const { isMobile } = useDevice()
@@ -111,6 +114,10 @@ const FilterNavigator = ({
   const [truncatedFacetsFetched, setTruncatedFacetsFetched] = useState(false)
   const [isPostalCodeModalOpen, setIsPostalCodeModalOpen] = useState(false)
   const [isPickupModalOpen, setisPickupModalOpen] = useState(false)
+
+  // States for desktop apply filters functionality
+  const [filterOperationsDesktop, setFilterOperationsDesktop] = useState([])
+  const [priceRangeDesktop, setPriceRangeDesktop] = useState(null)
 
   const mobileLayout =
     (isMobile && layout === LAYOUT_TYPES.responsive) ||
@@ -199,6 +206,47 @@ const FilterNavigator = ({
     navigateToFacet(selectedFilters, preventRouteChange, true)
   }
 
+  // Desktop apply filters handlers
+  const isFilterSelectedDesktop = (selectableFilters, filter) => {
+    return selectableFilters.find(
+      filterOperation => filter.value === filterOperation.value
+    )
+  }
+
+  const handleFilterCheckDesktop = filter => {
+    if (!showApplyFiltersButtonOnDesktop) {
+      navigateToFacet(filter, preventRouteChange)
+      return
+    }
+
+    if (!isFilterSelectedDesktop(filterOperationsDesktop, filter)) {
+      setFilterOperationsDesktop(filterOperationsDesktop.concat(filter))
+    } else {
+      setFilterOperationsDesktop(
+        filterOperationsDesktop.filter(facet => facet.value !== filter.value)
+      )
+    }
+  }
+
+  const handleApplyFiltersDesktop = () => {
+    navigateToFacet(filterOperationsDesktop, preventRouteChange, false, priceRangeDesktop)
+    setFilterOperationsDesktop([])
+    setPriceRangeDesktop(null)
+  }
+
+  const handleClearFiltersDesktop = () => {
+    setFilterOperationsDesktop([])
+    setPriceRangeDesktop(null)
+    navigateToFacet(selectedFilters, preventRouteChange, true)
+  }
+
+  const handlePriceRangeChangeDesktop = newPriceRange => {
+    if (!showApplyFiltersButtonOnDesktop) {
+      return
+    }
+    setPriceRangeDesktop(newPriceRange)
+  }
+
   const selectedCategories = getSelectedCategories(tree)
   const navigateToFacet = useFacetNavigation(
     useMemo(() => {
@@ -209,11 +257,30 @@ const FilterNavigator = ({
 
   const filterClasses = classNames({
     'flex items-center justify-center flex-auto h-100': mobileLayout,
+    dn: loading,
   })
 
   return (
     <Fragment>
-      {/* Skeleton loader removed — filters stay visible during loading */}
+      {loading && !mobileLayout ? (
+        <div className="mv5">
+          <ContentLoader
+            style={{
+              width: '230px',
+              height: '320px',
+            }}
+            width="230"
+            height="320"
+            y="0"
+            x="0"
+          >
+            <rect width="100%" height="1em" />
+            <rect width="100%" height="8em" y="1.5em" />
+            <rect width="100%" height="1em" y="10.5em" />
+            <rect width="100%" height="8em" y="12em" />
+          </ContentLoader>
+        </div>
+      ) : null}
 
       {mobileLayout ? (
         <div className={styles.filters}>
@@ -258,12 +325,19 @@ const FilterNavigator = ({
                 filtersTitleHtmlTag={filtersTitleHtmlTag}
               />
             </div>
-            {/* SelectedFilters ("Filtrado por") removed — not in Figma design */}
+            <SelectedFilters
+              filters={selectedFilters}
+              preventRouteChange={preventRouteChange}
+              navigateToFacet={showApplyFiltersButtonOnDesktop ? handleFilterCheckDesktop : navigateToFacet}
+              onOpenPostalCodeModal={() => setIsPostalCodeModalOpen(true)}
+              onOpenPickupModal={() => setisPickupModalOpen(true)}
+              showShippingFacet={showShippingFacet}
+            />
             <DepartmentFilters
               title={CATEGORIES_TITLE}
               tree={tree}
               isVisible={!hiddenFacets.categories}
-              onCategorySelect={navigateToFacet}
+              onCategorySelect={showApplyFiltersButtonOnDesktop ? handleFilterCheckDesktop : navigateToFacet}
               preventRouteChange={preventRouteChange}
               maxItemsDepartment={maxItemsDepartment}
               maxItemsCategory={maxItemsCategory}
@@ -274,7 +348,7 @@ const FilterNavigator = ({
               priceRange={priceRange}
               preventRouteChange={preventRouteChange}
               initiallyCollapsed={initiallyCollapsed}
-              navigateToFacet={navigateToFacet}
+              navigateToFacet={showApplyFiltersButtonOnDesktop ? handleFilterCheckDesktop : navigateToFacet}
               truncatedFacetsFetched={truncatedFacetsFetched}
               setTruncatedFacetsFetched={setTruncatedFacetsFetched}
               truncateFilters={truncateFilters}
@@ -286,6 +360,7 @@ const FilterNavigator = ({
               scrollToTop={scrollToTop}
               onOpenPostalCodeModal={() => setIsPostalCodeModalOpen(true)}
               onOpenPickupModal={() => setisPickupModalOpen(true)}
+              onPriceRangeChange={showApplyFiltersButtonOnDesktop ? handlePriceRangeChangeDesktop : undefined}
             />
             {showClearAllFiltersOnDesktop && hasFiltersApplied && (
               <div
@@ -297,6 +372,39 @@ const FilterNavigator = ({
                 <Button onClick={handleResetFilters}>
                   <FormattedMessage id="store/search-result.filter-button.clearAll" />
                 </Button>
+              </div>
+            )}
+            {showApplyFiltersButtonOnDesktop && (
+              <div
+                className={classNames(
+                  handles.filterButtonsBoxDesktop,
+                  'bt b--muted-5 mt4 pt4 flex flex-column'
+                )}
+              >
+                <div className={handles.filterApplyButtonWrapperDesktop}>
+                  <Button
+                    block
+                    variation="secondary"
+                    size="regular"
+                    onClick={handleApplyFiltersDesktop}
+                    disabled={filterOperationsDesktop.length === 0 && !priceRangeDesktop}
+                  >
+                    {/* <FormattedMessage id="store/search-result.filter-button.apply" /> */}
+                    APLICAR FILTROS
+                  </Button>
+                </div>
+                <div className={classNames(handles.filterClearButtonWrapperDesktop, 'mb2')}>
+                  <Button
+                    block
+                    variation="tertiary"
+                    size="regular"
+                    onClick={handleClearFiltersDesktop}
+                  >
+                    {/* <FormattedMessage id="store/search-result.filter-button.clear" /> */}
+                    BORRAR FILTROS
+                  </Button>
+                </div>
+
               </div>
             )}
           </div>
@@ -344,6 +452,8 @@ FilterNavigator.propTypes = {
   filtersTitleHtmlTag: PropTypes.string,
   /** Whether an overview of the applied filters should be displayed (`"show"`) or not (`"hide"`). */
   appliedFiltersOverview: PropTypes.string,
+  /** Whether to show apply/clear buttons on desktop (like mobile behavior) */
+  showApplyFiltersButtonOnDesktop: PropTypes.bool,
   ...hiddenFacetsSchema,
 }
 

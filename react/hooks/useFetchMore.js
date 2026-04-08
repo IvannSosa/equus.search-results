@@ -227,6 +227,10 @@ export const useFetchMore = props => {
   }
 
   const handleFetchMorePrevious = async () => {
+    if (pageState.previousPage < 1 || pageState.from <= 0) {
+      return
+    }
+
     const rollbackState = pageState
     const to = pageState.from - 1
     const from = max(0, to - maxItemsPerPage + 1)

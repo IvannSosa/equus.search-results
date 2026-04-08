@@ -18,7 +18,6 @@ const LocalQuery = props => {
     orderByField = SORT_OPTIONS[0].value,
     hideUnavailableItems,
     facetsBehavior,
-    skipFacets,
     skusFilter,
     simulationBehavior,
     query: {
@@ -42,7 +41,6 @@ const LocalQuery = props => {
       priceRange={priceRange}
       hideUnavailableItems={hideUnavailableItems}
       facetsBehavior={facetsBehavior}
-      skipFacets={skipFacets}
       pageQuery={pageQuery}
       skusFilter={skusFilter}
       simulationBehavior={simulationBehavior}

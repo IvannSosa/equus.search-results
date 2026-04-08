@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useContext, useEffect, useMemo } from 'react'
 import type { ComponentType } from 'react'
 import classNames from 'classnames'
 import { ProductListContext } from 'vtex.product-list-context'
@@ -8,11 +8,9 @@ import { useResponsiveValue } from 'vtex.responsive-values'
 import type { MaybeResponsiveInput } from 'vtex.responsive-values'
 import { useRuntime } from 'vtex.render-runtime'
 import { SearchPageContext } from 'vtex.search-page-context'
-import { useSearchPage } from 'vtex.search-page-context/SearchPageContext'
 
 import GalleryLayoutRow from './components/GalleryLayoutRow'
 import SettingsContext from './components/SettingsContext'
-import { useFilterToggle } from './components/FilterToggleContext'
 import ProductListEventCaller from './utils/ProductListEventCaller'
 import type { Product } from './Gallery'
 import {
@@ -23,10 +21,6 @@ import { useBreadcrumb } from './hooks/useBreadcrumb'
 import { useSearchTitle } from './hooks/useSearchTitle'
 
 const LAZY_RENDER_THRESHOLD = 2
-// Visible products = ~8 (2 rows × 4 cols). Each has 40ms delay + 250ms animation.
-// Formula: min(visibleCount * 40 + 250, 800) — caps at 800ms vs old fixed 1500ms.
-const STAGGER_VISIBLE_ESTIMATE = 8
-const STAGGER_DURATION_MS = Math.min(STAGGER_VISIBLE_ESTIMATE * 40 + 250, 800)
 
 const CSS_HANDLES = ['gallery'] as const
 
@@ -70,49 +64,8 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
   const { trackingId } = useContext(SettingsContext) || {}
   const handles = useCssHandles(CSS_HANDLES)
   const { getSettings } = useRuntime()
-  const { selectedGalleryLayout, isFetchingMore } = useSearchPageState()
+  const { selectedGalleryLayout } = useSearchPageState()
   const searchPageStateDispatch = useSearchPageStateDispatch()
-  const { filtersVisible } = useFilterToggle()
-  const { searchQuery } = useSearchPage()
-
-  // Fade animation: loader on filter apply, stagger-in when products arrive
-  const isFilterLoading = !!(searchQuery?.loading && !isFetchingMore)
-  const [gridPhase, setGridPhase] = useState<'idle' | 'fadeOut' | 'staggerIn'>('idle')
-  const prevLoadingRef = useRef(false)
-  const staggerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    const wasLoading = prevLoadingRef.current
-    prevLoadingRef.current = isFilterLoading
-
-    // Loading just started (filter applied) → fade out + show loader
-    if (isFilterLoading && !wasLoading) {
-      if (staggerTimerRef.current) {
-        clearTimeout(staggerTimerRef.current)
-        staggerTimerRef.current = null
-      }
-      setGridPhase('fadeOut')
-      return
-    }
-
-    // Loading just ended → stagger in
-    if (!isFilterLoading && wasLoading) {
-      setGridPhase('staggerIn')
-      staggerTimerRef.current = setTimeout(() => {
-        setGridPhase('idle')
-        staggerTimerRef.current = null
-      }, STAGGER_DURATION_MS)
-    }
-  }, [isFilterLoading])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (staggerTimerRef.current) {
-        clearTimeout(staggerTimerRef.current)
-      }
-    }
-  }, [])
 
   const breadcrumb = useBreadcrumb()
   const searchTitle = useSearchTitle(breadcrumb ?? [], { matchFt: true }).trim()
@@ -186,14 +139,12 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
     return null
   }
 
-  const filtersModifier = filtersVisible ? 'filtersOpen' : 'filtersClosed'
-
   const galleryClasses = classNames(
-    applyModifiers(handles.gallery, [currentLayoutOption.name, filtersModifier]),
+    applyModifiers(handles.gallery, currentLayoutOption.name),
     'flex flex-row flex-wrap items-stretch bn ph1 na4',
     {
-      'justify-center': !showingFacets && !filtersVisible,
-      'pl9-l': showingFacets || filtersVisible,
+      'justify-center': !showingFacets,
+      'pl9-l': showingFacets,
     }
   )
 
@@ -202,91 +153,34 @@ const GalleryLayout: React.FC<GalleryLayoutProps> = ({
 
   return (
     <ProductListProvider listName={listName as string}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes galleryItemFadeIn {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes logoSpin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes logoFadeIn {
-          from { opacity: 0; }
-          to { opacity: 0.8; }
-        }
-      `}} />
-      <div style={{ position: 'relative' }}>
-        {gridPhase === 'fadeOut' && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            paddingTop: '8rem',
-            zIndex: 10,
-            pointerEvents: 'none',
-            animation: 'logoFadeIn 150ms ease-out forwards',
-          }}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="37"
-              height="37"
-              viewBox="0 0 37 37"
-              fill="none"
-              style={{ animation: 'logoSpin 1s ease-in-out infinite' }}
-            >
-              <circle cx="7.53704" cy="7.53704" r="7.53704" fill="#6A6A6A" />
-              <circle cx="29.4628" cy="7.53704" r="7.53704" fill="#6A6A6A" />
-              <circle cx="7.53704" cy="29.4631" r="7.53704" fill="#6A6A6A" />
-              <circle cx="29.4628" cy="29.4631" r="7.53704" fill="#6A6A6A" />
-            </svg>
+      <div id="gallery-layout-container" className={galleryClasses}>
+        {galleryRows.map((rowProducts, index) => (
+          <GalleryLayoutRow
+            key={`${currentLayoutOption.name}-${index}`}
+            products={rowProducts}
+            lazyRender={!!isLazyRenderEnabled && index >= LAZY_RENDER_THRESHOLD}
+            summary={summary}
+            displayMode="normal"
+            itemsPerRow={itemsPerRow}
+            currentLayoutName={currentLayoutOption.name}
+            rowIndex={index}
+            listName={listName}
+            preferredSKU={preferredSKU}
+            GalleryItemComponent={slots[currentLayoutOption.component]}
+          />
+        ))}
+        {typeof lazyItemsRemaining === 'number' && lazyItemsRemaining > 0 && (
+          <div
+            style={{
+              width: '100%',
+              // Approximate number, just to add scroll leeway
+              height: 300 * Math.ceil(lazyItemsRemaining / itemsPerRow),
+            }}
+            className="flex justify-center pt10"
+          >
+            <Spinner />
           </div>
         )}
-        <div
-          id="gallery-layout-container"
-          className={galleryClasses}
-          style={gridPhase === 'fadeOut' ? {
-            opacity: 0.3,
-            transition: 'opacity 150ms ease-in-out',
-          } : undefined}
-        >
-          {galleryRows.map((rowProducts, index) => (
-            <GalleryLayoutRow
-              key={`${currentLayoutOption.name}-${index}`}
-              products={rowProducts}
-              lazyRender={
-                !!isLazyRenderEnabled && index >= LAZY_RENDER_THRESHOLD
-              }
-              summary={summary}
-              displayMode="normal"
-              itemsPerRow={itemsPerRow}
-              gridPhase={gridPhase}
-              baseIndex={index * itemsPerRow}
-              currentLayoutName={currentLayoutOption.name}
-              rowIndex={index}
-              listName={listName}
-              preferredSKU={preferredSKU}
-              GalleryItemComponent={slots[currentLayoutOption.component]}
-            />
-          ))}
-          {typeof lazyItemsRemaining === 'number' &&
-            lazyItemsRemaining > 0 && (
-              <div
-                style={{
-                  width: '100%',
-                  height: 300 * Math.ceil(lazyItemsRemaining / itemsPerRow),
-                }}
-                className="flex justify-center pt10"
-              >
-                <Spinner />
-              </div>
-            )}
-        </div>
       </div>
       <ProductListEventCaller />
     </ProductListProvider>

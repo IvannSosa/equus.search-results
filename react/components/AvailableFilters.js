@@ -41,8 +41,17 @@ const Filter = ({
   scrollToTop,
   onOpenPostalCodeModal,
   onOpenPickupModal,
+  onPriceRangeChange,
 }) => {
   const { type, title, facets, quantity, oneSelectedCollapse = false } = filter
+
+  const handlePriceRangeChange = newPriceRange => {
+    if (onPriceRangeChange) {
+      onPriceRangeChange(newPriceRange)
+    } else {
+      navigateToFacet([], preventRouteChange, false, newPriceRange)
+    }
+  }
 
   switch (type) {
     case 'PriceRanges':
@@ -56,9 +65,7 @@ const Filter = ({
           priceRangeLayout={priceRangeLayout}
           scrollToTop={scrollToTop}
           showClearByFilter={showClearByFilter}
-          onChangePriceRange={newPriceRange =>
-            navigateToFacet([], preventRouteChange, false, newPriceRange)
-          }
+          onChangePriceRange={handlePriceRangeChange}
         />
       )
 
@@ -107,6 +114,8 @@ AvailableFilters.propTypes = {
   initiallyCollapsed: PropTypes.bool,
   /** If filters start truncated */
   truncateFilters: PropTypes.bool,
+  /** Callback for price range changes (used for desktop apply button mode) */
+  onPriceRangeChange: PropTypes.func,
 }
 
 export default AvailableFilters

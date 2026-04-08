@@ -2,6 +2,7 @@ import React, { Fragment, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useIntl, FormattedMessage } from 'react-intl'
 import classNames from 'classnames'
+import { IconCaret } from 'vtex.store-icons'
 import { Tag } from 'vtex.styleguide'
 import { useCssHandles, applyModifiers } from 'vtex.css-handles'
 import { Collapse } from 'react-collapse'
@@ -98,33 +99,44 @@ const AccordionFilterItem = ({
               <span className={handles.accordionFilterItemTitle}>
                 {getFilterTitle(title, intl)}
               </span>
-              <span
-                className={`${handles.accordionFilterItemIcon} fr`}
-                style={{
-                  transition: 'transform 0.2s ease-in-out',
-                  transform:
-                    isNavigationCollapsible && !isCollapsed
-                      ? 'rotate(180deg)'
-                      : 'rotate(0deg)',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
+              {quantitySelected !== 0 && (
+                <div
+                  className={classNames(
+                    handles.accordionFilterItemTag,
+                    'dib ml3'
+                  )}
                 >
-                  <path
-                    d="M3.5 5.25L7 8.75L10.5 5.25"
-                    stroke="#3E3E3E"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                  <Tag>{quantitySelected}</Tag>
+                </div>
+              )}
+              {quantitySelected > 0 && showClearByFilter && (
+                <span
+                  className={classNames(
+                    handles.accordionFilterItemTag,
+                    'dib ml3'
+                  )}
+                >
+                  <Tag
+                    size="small"
+                    onClick={e => {
+                      e.stopPropagation()
+                      onClearFilter && onClearFilter(facetKey)
+                    }}
+                  >
+                    <FormattedMessage id="store/search-result.filter-button.clear" />
+                  </Tag>
+                </span>
+              )}
+              <span className={`${handles.accordionFilterItemIcon} fr`}>
+                <IconCaret
+                  orientation={
+                    !isNavigationCollapsible ||
+                    (isNavigationCollapsible && isCollapsed)
+                      ? 'down'
+                      : 'up'
+                  }
+                  size={10}
+                />
               </span>
               {appliedFiltersOverview === 'show' && quantitySelected > 0 && (
                 <div

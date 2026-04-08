@@ -62,6 +62,7 @@ const CSS_HANDLES = [
   'filterTemplateOverflow',
   'seeMoreButton',
   'filterSelectedFilters',
+  'orderByCollapseIcon',
 ]
 
 const useSettings = () => useContext(SettingsContext)
@@ -235,16 +236,23 @@ const FilterOptionTemplate = ({
 
   const containerClassName = classNames(
     handles.filter__container,
-    { [`${styles.filter__container}--${id}`]: id }
+    { [`${styles.filter__container}--${id}`]: id },
+    'bb b--muted-4'
   )
 
-  const titleContainerClassName = classNames(handles.filter, {
+  const titleContainerClassName = classNames(handles.filter, 'pv5', {
     [handles.filterSelected]: selected,
     [handles.filterAvailable]: !selected,
     [handles.filterIsOpen]: isOpen,
   })
 
-  const titleClassName = classNames(handles.filterTitle)
+  const titleClassName = classNames(
+    handles.filterTitle,
+    'f5 flex items-center justify-between',
+    {
+      ttu: selected,
+    }
+  )
 
   return (
     <div className={containerClassName} ref={filterRef}>
@@ -260,7 +268,7 @@ const FilterOptionTemplate = ({
           <div className={titleClassName}>
             <span className={`${handles.filterTitleSpan}`}>
               {title}
-              {/*isClearButtonVisible && (
+              {isClearButtonVisible && (
                 <span className="ml2">
                   <Tag
                     size="small"
@@ -273,54 +281,52 @@ const FilterOptionTemplate = ({
                     <FormattedMessage id="store/search-result.filter-button.clear" />
                   </Tag>
                 </span>
-              )*/}
+              )}
             </span>
             {collapsable && (
+              // <span
+              //   className={classNames(
+              //     handles.filterIcon,
+              //     'flex items-center ph5 c-muted-3'
+              //   )}
+              // >
+              //   <IconCaret orientation={isOpen ? 'up' : 'down'} size={14} />
+              // </span>
               <span
-                className={handles.filterIcon}
+                className={classNames(handles.orderByCollapseIcon, 'fr')}
+                style={{
+                  display: 'inline-flex',
+                  transition: 'transform 0.3s ease',
+                  transform: !open ? 'rotate(0deg)' : 'rotate(180deg)',
+                }}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  style={{
-                    transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.3s ease-in-out',
-                  }}
-                >
-                  <path
-                    d="M3.5 5.25L7 8.75L10.5 5.25"
-                    stroke="#3E3E3E"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="6" viewBox="0 0 11 6" fill="none">
+                  <path d="M0.5 0.5L5.5 5.5L10.5 0.5" stroke="#1E1E1E" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
             )}
           </div>
         </div>
-        {/*appliedFiltersOverview === 'show' && filters && !selected && (
-          <div className={handles.filterSelectedFilters}>
+        {appliedFiltersOverview === 'show' && filters && !selected && (
+          <div className={classNames(handles.filterSelectedFilters, 'f6')}>
             {filters
               .filter(facet => facet.selected)
               .map(facet => facet.name)
               .join(', ')}
           </div>
-        )*/}
+        )}
       </div>
       <div
         className={classNames(handles.filterTemplateOverflow, {
-          [handles.filterIsOpen]: isOpen,
+          'overflow-y-auto': collapsable,
+          pb5: !collapsable || isOpen,
         })}
         ref={scrollable}
         data-testid="scrollable-element"
         style={
           !selected &&
-          (!(truncateFilters || isLazyFacetsFetchEnabled) ||
-            isLazyRenderEnabled)
+            (!(truncateFilters || isLazyFacetsFetchEnabled) ||
+              isLazyRenderEnabled)
             ? { maxHeight: '200px' }
             : {}
         }
@@ -335,19 +341,19 @@ const FilterOptionTemplate = ({
             initialStyle={
               isOpen
                 ? {
-                    height: 'auto',
-                    overflow: 'initial',
-                    transition: 'height 500ms',
-                  }
+                  height: 'auto',
+                  overflow: 'initial',
+                  transition: 'height 500ms',
+                }
                 : {
-                    height: '0px',
-                    overflow: 'hidden',
-                    transition: 'height 500ms',
-                  }
+                  height: '0px',
+                  overflow: 'hidden',
+                  transition: 'height 500ms',
+                }
             }
           >
             {thresholdForFacetSearch !== undefined &&
-            thresholdForFacetSearch < filters.length ? (
+              thresholdForFacetSearch < filters.length ? (
               <SearchFilterBar name={title} handleChange={setSearchTerm} />
             ) : null}
             {renderChildren()}

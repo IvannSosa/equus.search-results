@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, useMemo } from 'react'
+import { Checkbox } from 'vtex.styleguide'
 import { useCssHandles, applyModifiers } from 'vtex.css-handles'
 import classNames from 'classnames'
 import { useSearchPage } from 'vtex.search-page-context/SearchPageContext'
@@ -10,13 +11,7 @@ import SettingsContext from './SettingsContext'
 import ShippingActionButton from './ShippingActionButton'
 import useShippingActions from '../hooks/useShippingActions'
 
-const CSS_HANDLES = [
-  'filterItem',
-  'productCount',
-  'filterItemTitle',
-  'filterCheckbox',
-  'filterCheckboxLabel',
-]
+const CSS_HANDLES = ['filterItem', 'productCount', 'filterItemTitle']
 
 // These are used to prevent creating a <Checkbox /> with id equal
 // to any of these words.
@@ -144,42 +139,25 @@ const FacetItem = ({
       alt={facet.name}
       title={facet.name}
     >
-      <label
-        htmlFor={checkBoxId}
-        className={classNames(handles.filterCheckboxLabel, {
-          'o-50': shouldDisable,
-        })}
-      >
-        <input
-          type="checkbox"
-          id={checkBoxId}
-          checked={selected}
-          onChange={() => {
-            pushFilterManipulationPixelEvent({
-              name: facetTitle,
-              value: facet.name,
-              products: searchQuery?.products ?? [],
-              push,
-            })
+      <Checkbox
+        id={checkBoxId}
+        checked={selected}
+        label={facetLabel}
+        name={facet.name}
+        onChange={() => {
+          pushFilterManipulationPixelEvent({
+            name: facetTitle,
+            value: facet.name,
+            products: searchQuery?.products ?? [],
+            push,
+          })
 
-            setSelected(!selected)
-            navigateToFacet({ ...facet, title: facetTitle }, preventRouteChange)
-          }}
-          name={facet.name}
-          value={facet.name}
-          disabled={shouldDisable}
-          className="o-0 absolute"
-          style={{ width: 0, height: 0 }}
-        />
-        <span
-          className={classNames(
-            handles.filterCheckbox,
-            { [`${handles.filterCheckbox}--checked`]: selected }
-          )}
-          aria-hidden="true"
-        />
-        <span>{facetLabel}</span>
-      </label>
+          setSelected(!selected)
+          navigateToFacet({ ...facet, title: facetTitle }, preventRouteChange)
+        }}
+        value={facet.name}
+        disabled={shouldDisable}
+      />
     </div>
   )
 }
