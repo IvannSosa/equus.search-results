@@ -51,5 +51,25 @@ export function buildRowItems(args: {
   page: number
   maxItems: number
 }): RowItem[] {
-  throw new Error('not implemented')
+  const { products, banners, rowIndex, itemsPerRow, page, maxItems } = args
+  const items: RowItem[] = []
+
+  products.forEach((product, index) => {
+    const absoluteProductIndex = rowIndex * itemsPerRow + index + 1
+    const globalPosition = (page - 1) * maxItems + absoluteProductIndex
+
+    const matching = banners.filter(b => b.position === globalPosition)
+    matching.forEach((b, bIndex) => {
+      items.push({
+        kind: 'banner',
+        banner: b.banner,
+        widthPosition: b.widthPosition,
+        key: `banner-${globalPosition}-${bIndex}`,
+      })
+    })
+
+    items.push({ kind: 'product', product, position: absoluteProductIndex })
+  })
+
+  return items
 }
