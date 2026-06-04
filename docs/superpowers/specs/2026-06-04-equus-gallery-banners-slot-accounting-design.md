@@ -1,29 +1,29 @@
-# Equus Gallery Banners — Slot Accounting & Pagination Shift
+# Equus Gallery Banners — Intercalar sin reemplazar productos
 
 **Fecha:** 2026-06-04
 **Cliente:** Equus (equusio)
 **Componente:** `equusio.search-result` (v3.139.19)
 **Asana:** [1215424994462292 — Las imágenes especiales reemplazan productos en la grilla](https://app.asana.com/1/66032875349265/project/1202543984602257/task/1215424994462292)
-**Referencia:** Arredo ya resolvió el mismo bug en `arredo.search-result` — ver `arredo/arredo.search-result/docs/superpowers/specs/2026-04-15-arredo-gallery-banners-slot-accounting-design.md`
+**Referencia (contingencia):** Arredo resolvió un caso relacionado con slot-accounting en `arredo.search-result` — ver `arredo/arredo.search-result/docs/superpowers/specs/2026-04-15-arredo-gallery-banners-slot-accounting-design.md`
 **Tipo:** Bug fix
 
 ---
 
 ## 1. Contexto y problema
 
-En las PLP de categoría regulares de Equus (`/categorias/remeras`, `/categorias/jeans`) se pueden configurar banners promocionales ("banner en sábana") que se insertan dentro de la grilla de productos vía el bloque `search-result-banners` (provider `GalleryBanners`, handle DOM `equusio_search-result-3-x-bannerItem`).
+En las PLP de categoría regulares de Equus (`/categorias/remeras`, `/categorias/jeans`) se configuran banners promocionales ("banner en sábana") que se insertan dentro de la grilla de productos vía el bloque `search-result-banners` (provider `GalleryBanners`, handle DOM `equusio_search-result-3-x-bannerItem`).
 
 **Bug actual:** en `equus.search-result/react/components/GalleryLayoutRow.tsx:113-121`, cuando un producto cae en la `globalPosition` de un banner, el componente hace `return <banner>` **en lugar** de renderizar el producto. Es decir, el banner **reemplaza** al producto en esa posición y ese producto se descarta del render. Con 3 banners activos en `/categorias/remeras`, se muestran 36 de 39 productos (39 − 3).
 
-Además, el componente **no descuenta** los slots de banner de la paginación: no hay nada que compense el conteo, así que en categorías de más de `maxItemsPerPage` (40) productos la grilla también se desordena y el total de páginas queda desfasado — el mismo problema que Arredo sufrió antes de su fix.
-
 ### Aclaración sobre el diagnóstico del ticket
 
-El refinamiento técnico del ticket de Asana apunta a la landing custom `/sabana-especial` (componente `SabanaGallery.tsx`, colección 402, prop `GridSummary: product-summary.shelf#image-only`) como causa raíz. **Ese diagnóstico está desactualizado:** fue redactado asumiendo que el componente no existía en el código. El bug reportado está en las **PLP de categoría regulares**, que NO usan `SabanaGallery` — usan el flujo estándar `Gallery → GalleryLayout → GalleryLayoutRow` de `equusio.search-result`. La landing `/sabana-especial` queda **fuera de scope**.
+El refinamiento técnico del ticket de Asana apunta a la landing custom `/sabana-especial` (componente `SabanaGallery.tsx`, colección 402) como causa raíz. **Ese diagnóstico está desactualizado:** las PLP de categoría regulares NO usan `SabanaGallery` — usan el flujo estándar `Gallery → GalleryLayout → GalleryLayoutRow` de `equusio.search-result`. La landing `/sabana-especial` queda **fuera de scope**.
 
 ## 2. Objetivo
 
-Cada página de la PLP debe contener **exactamente `maxItemsPerPage` slots** ocupados entre productos y banners, **sin perder ningún producto**. Los productos desplazados por los banners aparecen en la página siguiente (vía `pagination: show-more`, configurada en el theme). El banner se **inserta** como celda adicional, nunca reemplaza un producto.
+Que los banners se **intercalen como celdas adicionales sin desplazar ni descartar productos**: todos los productos que devuelve el search se renderizan, y cada banner se inserta **antes** del producto en su `position`. El conteo de productos visibles no se ve afectado por la cantidad de banners.
+
+Este es exactamente el comportamiento que pide el ticket. La grilla es un contenedor flex-wrap continuo (`#gallery-layout-container`, clases `flex flex-row flex-wrap`), así que insertar una celda extra fluye naturalmente sin romper el layout.
 
 ### Criterios de aceptación (del ticket)
 
@@ -33,106 +33,79 @@ Cada página de la PLP debe contener **exactamente `maxItemsPerPage` slots** ocu
 4. Con sábana desactivada (sin banners), comportamiento idéntico al actual — sin regresión.
 5. Aplica a desktop y mobile.
 
-## 3. Regla
+## 3. Enfoque elegido: aditivo (insertar, nunca reemplazar)
 
-Para una página `N` dada:
+Se corrige el render de `GalleryLayoutRow` para que el banner se **inserte** como celda adicional y el producto **siempre** se renderice. No se toca la paginación, el slicing de productos, ni el conteo de páginas: como ningún producto se descarta, no hace falta compensar slots.
 
+Diferencia clave con el bug: hoy `products.map(...)` devuelve banner **o** producto (descarta el producto). El fix acumula `[banner?, producto]` por cada posición — el producto nunca se pierde. Es el mismo principio que aplicó Arredo en su `GalleryLayoutRow` ("Always render the product, banners insert, never replace"), pero **sin** su capa de slot-accounting (que Equus no necesita para cumplir el ticket).
+
+### Contingencia (NO se implementa por defecto)
+
+La solución completa de slot-accounting de Arredo (helper `bannerSlots.ts` + shift de paginación en `GalleryLayout` / `SearchQuery` / `useFetchMore` / `SearchFooter`) **solo se aplica si** la validación manual en categorías de más de `maxItemsPerPage` (40) productos muestra que el aditivo rompe visualmente la grilla o desincroniza el conteo de páginas. Mientras el aditivo cumpla los criterios de aceptación, queda como está. El provider `search-result-banners` envuelve toda la página de búsqueda vía `around` (theme `interfaces.json`: `store.search.custom#category` y variantes), por lo que esa contingencia es viable sin cambios de wiring si llegara a hacer falta.
+
+## 4. Arquitectura del cambio
+
+### 4.1 Helper puro: `react/utils/interleaveBanners.ts` (NUEVO)
+
+Para que la lógica de intercalado sea testeable sin mockear los hooks de React, se extrae a una función pura:
+
+```ts
+export interface ResolvedBanner {
+  banner: { image: string; imageMobile?: string; url: string; alt: string }
+  position: number
+  widthPercent: number
+}
+
+export type RowItem =
+  | { kind: 'banner'; banner: ResolvedBanner['banner']; widthPercent: number; key: string }
+  | { kind: 'product'; product: Product; position: number }
+
+/**
+ * Construye la lista ordenada de celdas de una fila. Por cada producto, si hay
+ * un banner cuya globalPosition coincide, se inserta ANTES del producto. Los
+ * productos nunca se descartan: output.filter(i => i.kind === 'product').length
+ * === products.length.
+ */
+export function buildRowItems(args: {
+  products: Product[]
+  banners: ResolvedBanner[]   // ya resueltos (position absoluta + widthPercent)
+  rowIndex: number
+  itemsPerRow: number
+  page: number
+  maxItems: number
+}): RowItem[]
 ```
-productos_visibles(N) + Σ widthPosition(banners_de_pagina_N) = maxItemsPerPage
-```
 
-Donde `banners_de_pagina_N` = banners cuyo `position` cae en el rango global `[from(N)+1, from(N)+maxItemsPerPage]`, considerando `repeatBanner`, `matchId` y el device actual.
+La fórmula de `globalPosition` se preserva idéntica a la actual: `(page - 1) * maxItems + (rowIndex * itemsPerRow + index + 1)`.
 
-La paginación del search query se recalcula para que:
+### 4.2 `GalleryLayoutRow.tsx` — consumir el helper
 
-```
-from(N) = Σ productos_visibles(k)  para k en [1..N-1]
-to(N)   = from(N) + productos_visibles(N) - 1
-```
+Anchor: `equus.search-result/react/components/GalleryLayoutRow.tsx:103-148`.
 
-## 4. Arquitectura
+- Se mantiene el cómputo de `finalBanners` (reduce con `repeatBanner` y `widthPosition` → %), `style`, `useRenderOnView`, etc.
+- El `products.map(...)` que hace `return <banner>` (descartando el producto) se reemplaza por: `buildRowItems(...)` → `.map()` que renderiza cada `RowItem` (banner como `styles.bannerItem`, producto como `GalleryItem`). El producto siempre se renderiza.
 
-Se porta la solución de Arredo. El corazón es un **helper puro** sin dependencias de React, testeado de forma exhaustiva antes de tocar el fetch. Los puntos de integración se adaptan a la versión "lean" del fork de Equus (que NO tiene `FilterToggleContext`, animaciones fade/stagger ni `selectMatchingSku` — esos cambios de Arredo NO se portan).
-
-### 4.1 Helper puro: `react/utils/bannerSlots.ts` (NUEVO — copia 1:1 de Arredo)
-
-Único punto de verdad del cálculo. API pública:
-
-- `normalizePath(raw)` — normaliza un path (lowercase, sin trailing slash, sin query).
-- `matchesCurrentContext(matchId, ctx)` — decide si un banner aplica al contexto actual (path / categoryId / collectionId / productClusterIds / categoryPath).
-- `filterApplicableBanners(banners, ctx, currentLayoutName)` — filtra por ruta + layout.
-- `expandBanners(banners, isMobile, itemsPerRow, maxAbsolutePosition)` — expande `repeatBanner` en instancias `{ position, widthSlots }`, clampea `widthSlots` a `itemsPerRow`.
-- `getBannerSlotsForPage({...})` → `{ bannerSlots, effectivePageSize, from, to }` — cálculo por página con shift acumulado (itera de página 1 hasta `page`).
-- `getTotalBannerSlotsAcrossAllPages({...})` → total de slots de banner a lo largo de todas las páginas hasta cubrir `recordsFiltered` (para `SearchFooter`).
-
-Tipos: `BannerConfig`, `RouteContext`, `ExpandedBanner`, `PageOffsets`. El archivo de Arredo (`arredo/arredo.search-result/react/utils/bannerSlots.ts`) se copia verbatim — es independiente de cliente.
-
-### 4.2 `GalleryLayout.tsx` — slicing de productos visibles
-
-Anchor actual: `equus.search-result/react/GalleryLayout.tsx:114-128` (memo `galleryRows` que slicea `products` en filas de `itemsPerRow`).
-
-Cambios:
-1. Importar `useBanners`, `useDevice`, `getBannerSlotsForPage`, `RouteContext`.
-2. Dentro del componente, obtener `banners`, `isMobile`, y `{ page, params, maxItemsPerPage }` de `useSearchPage()` + `route` de `useRuntime()`.
-3. Construir `RouteContext` (memo) y calcular `pageOffsets = getBannerSlotsForPage(...)` con `currentLayoutOption.name`.
-4. `const visibleProducts = products.slice(0, pageOffsets.effectivePageSize)`.
-5. El memo `galleryRows` se arma sobre `visibleProducts` en vez de `products`.
-
-Nota: Equus ya importa `useRuntime` y `SearchPageContext`. NO tiene `isFetchingMore` ni `filtersVisible` (a diferencia de Arredo) — la integración es más simple; solo se agregan las dependencias nuevas.
-
-### 4.3 `GalleryLayoutRow.tsx` — insertar en vez de reemplazar (FIX VISUAL CENTRAL)
-
-Anchor actual: `equus.search-result/react/components/GalleryLayoutRow.tsx:103-148`.
-
-Cambio: el `products.map(...)` que hace `return <banner>` (descartando el producto) se reescribe a un patrón de acumulación (`items: React.ReactNode[]`) que **primero inserta el banner** si hay uno para `globalPosition` y **siempre renderiza el producto a continuación** — como en `arredo.search-result/react/components/GalleryLayoutRow.tsx:162-245`. Se omiten las piezas de animación de Arredo (`gridPhase`, `baseIndex`, `staggerStyle`).
-
-Opcionalmente (DRY): reutilizar `filterApplicableBanners` / `normalizePath` del helper para el matcheo por contexto, en lugar de la lógica inline actual. La lógica de matcheo de Equus hoy es más simple (`filterBannersByPage` en `GalleryBanners.tsx` por path); se mantiene compatible.
-
-### 4.4 `SearchQuery.js` — offsets iniciales
-
-Anchors: `SearchQuery.js:327-328` (`const from = (page - 1) * maxItemsPerPage; const to = from + itemsLimit - 1`) y `:437` (`from: from + INITIAL_ITEMS_LIMIT`).
-
-Cambios:
-- Consumir `useBanners()`, `useDevice()`, `route` de `useRuntime()`.
-- Reemplazar el cálculo de `from`/`to` por `getBannerSlotsForPage(...).from` / `.to` (respetando `shouldLimitItems`/`itemsLimit` para la lazy query).
-- El `fetchMore` de lazy items usa `from + pageOffsets.effectivePageSize - 1`.
-
-### 4.5 `useFetchMore.js` — show-more (forward/backward)
-
-Anchors: `useFetchMore.js:162-167` (`initialState`), `:188-191` (`handleFetchMoreNext`), `:229-236` (`handleFetchMorePrevious`).
-
-Cambios: derivar `offsetsFor(pageNum) = getBannerSlotsForPage(...)` y usar `from`/`to` del helper en initialState, next y previous. Equus ya tiene el guard `previousPage < 1 || from <= 0` en `:230` — se mantiene.
-
-### 4.6 `SearchFooter.js` — total de páginas
-
-Anchor: `SearchFooter.js:64-65` (`const lastPage = Math.ceil(recordsFiltered / maxItemsPerPage)`). Es class component (`withRuntimeContext`).
-
-Cambio: wrapper hook-friendly que calcula `getTotalBannerSlotsAcrossAllPages(...)` y lo pasa como prop `totalBannerSlots`; la clase computa `lastPage = Math.ceil((recordsFiltered + totalBannerSlots) / maxItemsPerPage)`.
+No se tocan: `GalleryLayout.tsx`, `SearchQuery.js`, `useFetchMore.js`, `SearchFooter.js`, `GalleryBanners.tsx`, `manifest.json`, theme, ni Site Editor.
 
 ## 5. Casos borde
 
-1. **`repeatBanner: true`** — se expande antes de contar slots por página.
-2. **Mobile vs desktop** — `positionMobile` / `widthPositionMobile` / `repeatBannerMobile` cuando `isMobile`. Mobile clampea a `itemsPerRow` (≤2).
-3. **`widthPosition > itemsPerRow`** — clampeado dentro del helper.
-4. **Filtros que cambian `recordsFiltered`** — la fórmula no depende del total.
-5. **`matchId` por categoría/ruta** — respetado por el matcher.
-6. **Show-more forward/backward** — `to`/`from` recalculados con `effectivePageSize`.
-7. **Caso del bug (39 productos < 40 maxItemsPerPage, 1 página)** — `effectivePageSize` no recorta (no hay página siguiente); el banner se inserta como celda extra y los 39 productos se renderizan completos. Es el escenario primario del ticket.
-8. **Banner con `position > recordsFiltered`** — se descarta al expandir.
-9. **SSR/CSR por `useDevice()`** — puede arrancar desktop; verificar que el recálculo client-side no cause flash de layout.
+1. **Sin banners** — `buildRowItems` devuelve solo productos; render idéntico al baseline (sin regresión).
+2. **`repeatBanner: true`** — la expansión vive en `finalBanners` (sin cambios); el helper solo intercala por `position`.
+3. **Mobile vs desktop** — `finalBanners` ya selecciona `positionMobile`/`widthPositionMobile`; el helper es agnóstico.
+4. **Dos banners para la misma posición** — se insertan ambos antes del producto (orden estable).
+5. **Banner en `position` mayor a la cantidad de productos** — no matchea ningún producto; no se renderiza (igual que hoy).
+6. **Multi-página (show-more)** — los productos siguen sin descartarse; el comportamiento de posicionamiento por `globalPosition` se preserva. Validar visualmente (ver §6 contingencia).
 
-## 6. Lo que NO se toca
-
-- La landing `/sabana-especial` ni `SabanaGallery.tsx` (fuera de scope; el bug no está ahí).
-- Animaciones / `selectMatchingSku` / `FilterToggleContext` de Arredo (Equus no los tiene).
-- `manifest.json`, theme blocks, configuración de banners en Site Editor.
-- El componente POW/Prestigio (otro repo).
-
-## 7. Plan de testing
+## 6. Plan de testing
 
 ### Automatizado
 
-`react/__tests__/bannerSlots.test.ts` — tests unitarios puros del helper (se portan de Arredo): `normalizePath`, `matchesCurrentContext`, `filterApplicableBanners`, `expandBanners`, `getBannerSlotsForPage` (matriz de páginas/shift), `getTotalBannerSlotsAcrossAllPages`, clamp y `repeatBanner`.
+`react/__tests__/interleaveBanners.test.ts` — tests puros de `buildRowItems`:
+- Sin banners → solo productos, mismo orden.
+- Banner en posición media → `[..., banner, producto, ...]`, banner antes del producto.
+- **Regresión clave:** con N banners, la cantidad de items `kind === 'product'` en el output es igual a `products.length` (ningún producto se pierde).
+- Banner en posición fuera de rango → no aparece.
+- Cálculo de `globalPosition` correcto en página > 1 y `rowIndex` > 0.
 
 ### Manual (QA staging)
 
@@ -140,22 +113,18 @@ Rutas: `/categorias/remeras` (39 productos), `/categorias/jeans`.
 
 1. Desktop, sábana activa con N banners → se muestran 39/39 productos + banners intercalados.
 2. Desktop, sin banners → grilla idéntica al baseline (sin regresión).
-3. Mobile, sábana activa → 39/39, banners clampeados a 2 columnas.
-4. `widthPosition` 1/2/3/4 → ancho correcto y sin pérdida de productos.
-5. `repeatBanner` activo → banners repetidos sin descontar productos.
-6. Categoría con >40 productos → página 1 mantiene 40 slots (productos + banners), los desplazados aparecen al hacer show-more, sin duplicados ni faltantes.
-7. Show-more hacia adelante y atrás → conteo acumulado correcto.
-8. `SearchFooter` → `lastPage` coherente con el total ajustado.
+3. Mobile, sábana activa → 39/39, banners con su ancho mobile.
+4. `widthPosition` 1/2/3/4 → ancho correcto, sin pérdida de productos.
+5. **Contingencia:** categoría con >40 productos + banners → si la grilla se ve rota o el conteo de páginas se desincroniza, escalar a la solución de slot-accounting de Arredo (§3 contingencia). Si se ve bien, no se hace nada más.
 
-## 8. Riesgos
+## 7. Riesgos
 
-- **Regresión de paginación** — `from`/`to` tocan el fetch. Mitigación: helper puro testeado antes de integrar.
-- **Inconsistencia SSR/CSR por `useDevice()`** — aceptar reflow controlado si aparece.
-- **Tests existentes del search-result** — correr la suite completa tras cada integración.
+- **Multi-página a escala** — el aditivo puede dejar filas con celdas extra en categorías grandes. Mitigación: validación manual + contingencia documentada (port de Arredo).
+- **Tests existentes del search-result** — correr la suite completa tras el cambio.
 
-## 9. Fuera de scope
+## 8. Fuera de scope
 
-- Refactor general de `equusio.search-result`.
 - La landing `/sabana-especial` / `SabanaGallery`.
-- Soporte multi-cliente (fix solo para Equus).
-- Cambios visuales en el diseño del banner.
+- Slot-accounting / shift de paginación (solo si la contingencia lo exige).
+- Refactor general de `equusio.search-result`.
+- Soporte multi-cliente.
