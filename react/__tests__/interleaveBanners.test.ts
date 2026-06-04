@@ -119,4 +119,31 @@ describe('buildRowItems', () => {
     expect(items[1].kind === 'product' && items[1].product.cacheId).toBe('p45')
     expect(productCount(items)).toBe(4)
   })
+
+  it('returns an empty array when there are no products', () => {
+    const items = buildRowItems({
+      products: [],
+      banners: [banner(1)],
+      rowIndex: 0,
+      itemsPerRow: 4,
+      page: 1,
+      maxItems: 40,
+    })
+    expect(items).toEqual([])
+  })
+
+  it('sets product.position to the 1-based row-local index', () => {
+    // page 2, rowIndex 1, itemsPerRow 4 → first product absoluteProductIndex = 1*4 + 0 + 1 = 5
+    const products = makeProducts(2, 44)
+    const items = buildRowItems({
+      products,
+      banners: [],
+      rowIndex: 1,
+      itemsPerRow: 4,
+      page: 2,
+      maxItems: 40,
+    })
+    const productItems = items.filter(i => i.kind === 'product')
+    expect(productItems.map(i => (i.kind === 'product' ? i.position : null))).toEqual([5, 6])
+  })
 })

@@ -29,9 +29,11 @@ export type RowItem =
       widthPosition: number
       key: string
     }
+  // 1-based row-local index (absoluteProductIndex), for analytics.
   | {
       kind: 'product'
       product: Product
+      /** 1-based row-local index (absoluteProductIndex), for analytics. */
       position: number
     }
 
@@ -39,6 +41,9 @@ export type RowItem =
  * Build the ordered list of cells for one product row. For each product at
  * index `i`, any banner whose globalPosition equals that product's global
  * position is inserted BEFORE the product; the product is always appended.
+ *
+ * `maxItems` is the total search records (recordsFiltered), used only to
+ * offset global position across pages.
  *
  * globalPosition mirrors the legacy formula exactly:
  *   (page - 1) * maxItems + (rowIndex * itemsPerRow + i + 1)
@@ -68,6 +73,8 @@ export function buildRowItems(args: {
       })
     })
 
+    // position = 1-based row-local index (absoluteProductIndex), forwarded to
+    // analytics by the caller — NOT the page-global position.
     items.push({ kind: 'product', product, position: absoluteProductIndex })
   })
 
