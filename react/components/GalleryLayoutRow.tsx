@@ -11,6 +11,7 @@ import type { Product } from '../Gallery'
 import type { PreferredSKU } from '../GalleryLayout'
 import styles from '../searchResult.css'
 import { pathOr } from 'ramda'
+import { buildRowItems } from '../utils/interleaveBanners'
 
 const CSS_HANDLES = ['galleryItem'] as const
 
@@ -100,21 +101,31 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
     return dummyElement
   }
 
+  const rowItems = buildRowItems({
+    products,
+    banners: (finalBanners as any[]) || [],
+    rowIndex,
+    itemsPerRow: effectiveItemsPerRow,
+    page,
+    maxItems,
+  })
+
   return (
     <>
-      {products.map((product, index) => {
-        const absoluteProductIndex = rowIndex * effectiveItemsPerRow + index + 1
-        // Calculate global position considering pagination
-        const globalPosition = (page - 1) * maxItems + absoluteProductIndex
-
-        // Check if there's a banner for this global position
-        const bannerForPosition = finalBanners?.find(banner => banner.position === globalPosition)
-
-        if (bannerForPosition) {
+      {rowItems.map(item => {
+        if (item.kind === 'banner') {
           return (
-            <div key={`banner-${absoluteProductIndex}`} className={styles.bannerItem} style={{ width: `${bannerForPosition.widthPosition}%` }}>
-              <a className={styles.bannerUrl} href={bannerForPosition.banner.url}>
-                <img className={styles.bannerImage} src={isMobile ? bannerForPosition.banner.imageMobile : bannerForPosition.banner.image} alt={bannerForPosition.banner.alt} />
+            <div
+              key={item.key}
+              className={styles.bannerItem}
+              style={{ width: `${item.widthPosition}%` }}
+            >
+              <a className={styles.bannerUrl} href={item.banner.url}>
+                <img
+                  className={styles.bannerImage}
+                  src={isMobile ? item.banner.imageMobile : item.banner.image}
+                  alt={item.banner.alt}
+                />
               </a>
             </div>
           )
@@ -122,7 +133,7 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
 
         return (
           <div
-            key={product.cacheId}
+            key={item.product.cacheId}
             style={style}
             className={classNames(
               applyModifiers(handles.galleryItem, [
@@ -134,10 +145,10 @@ const GalleryLayoutRow: React.FC<GalleryLayoutRowProps> = ({
           >
             <GalleryItem
               GalleryItemComponent={GalleryItemComponent}
-              item={product}
+              item={item.product}
               summary={summary}
               displayMode={displayMode}
-              position={absoluteProductIndex}
+              position={item.position}
               listName={listName}
               preferredSKU={preferredSKU}
             />
