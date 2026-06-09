@@ -1,7 +1,7 @@
 {
   "name": "search-result",
   "vendor": "equusio",
-  "version": "3.139.19",
+  "version": "3.139.20",
   "title": "Equus Search Result",
   "description": "A search result wrapper component",
   "mustUpdateAt": "2019-04-25",
